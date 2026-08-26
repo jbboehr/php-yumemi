@@ -29,9 +29,26 @@ To try the uninstalled extension:
 php -d extension="$PWD/modules/yumemi.so" -r 'var_dump(extension_loaded("yumemi"));'
 ```
 
+### Nix
+
+The flake provides packages, checks, and development shells for PHP 8.2 through 8.5. PHP 8.2 is the default:
+
+```console
+nix develop
+phpize
+./configure --enable-yumemi
+make -j4
+make test
+```
+
+Select another supported PHP version by attribute, for example `nix develop .#php85` or `nix build .#php85`. Run the
+PHPT suite against every supported PHP version and verify Nix formatting with `nix flake check`. Format Nix files with
+`nix fmt`. With direnv installed, the checked-in `.envrc` enters the default shell automatically.
+
 ## Layout
 
 - `config.m4` defines the `phpize` build.
+- `nix/derivation.nix` packages the extension for the flake's supported PHP versions.
 - `php_yumemi.h` contains module metadata.
 - `src/extension.c` registers the module and its `phpinfo()` output.
 - `tests/` contains PHPT smoke tests.

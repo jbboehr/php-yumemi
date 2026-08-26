@@ -5,6 +5,7 @@
 *.lo
 *.o
 .deps/
+.direnv/
 .libs/
 autom4te.cache/
 build/
