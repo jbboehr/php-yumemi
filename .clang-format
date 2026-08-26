@@ -1,0 +1,21 @@
+---
+Language: Cpp
+BasedOnStyle: Mozilla
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+ColumnLimit: 120
+DerivePointerAlignment: false
+IndentWidth: 4
+ContinuationIndentWidth: 4
+PointerAlignment: Right
+UseTab: Never
+SortIncludes: false
+AttributeMacros:
+  - zend_always_inline
+  - ZEND_COLD
+  - ZEND_HOT
+  - YUMEMI_LOCAL
+StatementMacros:
+  - ZEND_TSRMLS_CACHE_DEFINE
+  - ZEND_MOD_END
+...
