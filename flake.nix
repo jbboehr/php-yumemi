@@ -44,6 +44,7 @@
 
         treefmt = treefmt-nix.lib.evalModule pkgs {
           projectRootFile = "flake.nix";
+          programs.actionlint.enable = pkgs.stdenv.hostPlatform.isLinux;
           programs.nixfmt.enable = true;
         };
 

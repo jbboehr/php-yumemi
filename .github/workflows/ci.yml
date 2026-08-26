@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: "Test | PHP ${{ matrix.php-version }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version:
+          - "8.2"
+          - "8.3"
+          - "8.4"
+          - "8.5"
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          coverage: "none"
+          php-version: "${{ matrix.php-version }}"
+      - run: phpize
+      - run: ./configure --enable-yumemi
+      - run: make
+      - run: make test
+        env:
+          NO_INTERACTION: 1
+          REPORT_EXIT_STATUS: 1
+      - name: Show PHPT logs
+        if: failure()
+        run: find tests -name '*.log' -exec cat {} \;
+
+  nix:
+    runs-on: ubuntu-latest
+    name: Nix
+    steps:
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
+      - run: nix flake check -L
