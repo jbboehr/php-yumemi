@@ -18,6 +18,15 @@ let
     redistributable = true;
     deprecated = false;
   };
+  ucarLicense = {
+    licenseType = "permissive";
+    shortName = "UCAR";
+    fullName = "University Corporation for Atmospheric Research License";
+    spdxId = "UCAR";
+    free = true;
+    redistributable = true;
+    deprecated = false;
+  };
 in
 (php.buildPecl {
   pname = "yumemi";
@@ -35,7 +44,10 @@ in
   meta = {
     description = "Experimental native PHP extension companion to yumemi.php";
     homepage = "https://github.com/jbboehr/php-yumemi";
-    license = lib.licenses.WITH lib.licenses.agpl3Only romicException;
+    license = [
+      (lib.licenses.WITH lib.licenses.agpl3Only romicException)
+      ucarLicense
+    ];
     platforms = lib.platforms.unix;
   };
 }).overrideAttrs

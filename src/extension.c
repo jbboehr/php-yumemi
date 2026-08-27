@@ -15,6 +15,7 @@
 
 #include "../php_yumemi.h"
 #include "internal_quantity.h"
+#include "parser/native_lexer.h"
 
 #if PHP_VERSION_ID < 80200
 #error php-yumemi requires PHP 8.2 or newer
@@ -22,7 +23,11 @@
 
 static PHP_MINIT_FUNCTION(yumemi)
 {
-    return yumemi_register_internal_quantity();
+    if (yumemi_register_internal_quantity() == FAILURE) {
+        return FAILURE;
+    }
+
+    return yumemi_register_native_lexer();
 }
 
 static PHP_MINFO_FUNCTION(yumemi)

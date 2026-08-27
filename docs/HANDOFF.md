@@ -1,6 +1,6 @@
 # Extension work handoff
 
-Snapshot date: 2026-08-26
+Snapshot date: 2026-08-27
 
 This document records the implemented baseline in `php-yumemi`, the corresponding local work in `yumemi.php`, and the
 next cross-repository slice. It assumes the current operator-handler changes are included; it is not a description of
@@ -25,8 +25,11 @@ The repository now contains:
 - GitHub Actions for the PHP and Nix checks;
 - the ordinary `phpize && ./configure && make && make test` build path;
 - an internal abstract `jbboehr\Yumemi\InternalQuantity` base class;
-- custom object creation, cloning, and arithmetic handlers for descendants of that base; and
-- PHPT coverage for registration, operator dispatch, compound assignment, object lifecycle, and failures.
+- custom object creation, cloning, and arithmetic handlers for descendants of that base;
+- a reentrant, length-aware Flex lexer for the Yumemi unit-expression token grammar, including Unicode classification,
+  byte spans, and parser resource limits; and
+- PHPT coverage for registration, operator dispatch, compound assignment, object lifecycle, failures, and native token
+  parity.
 
 The local checkout at `tmp/yumemi.php` contains the separate method-only library seam: an empty PHP fallback
 `InternalQuantity`, `Quantity extends InternalQuantity`, the canonical `rdiv()` method, PHPStan method inference, and
@@ -37,12 +40,12 @@ from the yumemi.php checkout, not from this repository.
 
 The extension is an optional syntax adapter, not a second unit engine.
 
-1. yumemi.php remains the semantic authority for exact arithmetic, unit parsing, normalization, conversion,
+1. yumemi.php remains the semantic authority for exact arithmetic, AST interpretation, normalization, conversion,
    registry-context safety, exceptions, and result construction.
 2. Portable code continues to use `Quantity::add()`, `sub()`, `mul()`, `div()`, `pow()`, and `rdiv()`. Installing the
    extension must not be necessary to exchange quantities or call the method API.
-3. The C handler delegates to public userland methods. It must not parse units, compare registries, convert values, or
-   construct `Quantity` objects itself.
+3. The C handler delegates to public userland methods. Native parser components must remain syntax-only: they must not
+   resolve unit names, compare registries, convert values, or construct `Quantity` objects themselves.
 4. PHPStan support belongs under yumemi.php's existing `src/PHPStan` boundary and must model the same method semantics.
 
 ## Implemented operator contract
@@ -98,6 +101,9 @@ constraints on the pure-PHP library while the cross-repository API remains exper
 | `003-operator-delegation.phpt` | Arithmetic, power, reverse-division mappings, and quantity multiplication order |
 | `004-object-lifecycle.phpt` | Compound assignment, clone handlers, declared/readonly properties, and GC |
 | `005-operator-failures.phpt` | Missing methods, unsupported operators, invalid arguments, scalar policy, and exceptions |
+| `006-native-lexer.phpt` | Token kinds, exact text, Unicode behavior, and byte spans |
+| `007-native-lexer-limits.phpt` | Input, token-count, nesting, and token-size limits |
+| `008-native-lexer-compatibility.phpt` | Fail-closed runtime PCRE compatibility gate |
 
 ## Verification
 
@@ -124,29 +130,31 @@ The supported Nix matrix and formatting gate is:
 nix flake check --keep-going -L
 ```
 
-The handler slice has passed all five PHPTs on PHP 8.2, 8.3, 8.4, and 8.5 NTS builds on x86_64 Linux, plus the strict
-PHP 8.2 build and formatting checks. When new files are still untracked, the default Git-backed flake source omits them;
-stage them first or verify from a clean source snapshot containing the complete intended change.
+The operator-handler slice passed its five PHPTs on PHP 8.2, 8.3, 8.4, and 8.5 NTS builds on x86_64 Linux. The lexer
+adds three PHPTs plus a generated-source check. When new files are still untracked, the default Git-backed flake source
+omits them; stage them first or verify from a clean source snapshot containing the complete intended change.
 
-## Next slice: Quantity operator support in PHPStan
+## Next slice: native syntax parser
 
-The runtime integration is covered in the yumemi.php checkout. The next work belongs in its PHPStan adapter and must
-model the optional extension syntax without moving semantic logic into C or requiring the extension at analysis time.
+The lexer is intentionally usable without a native parser so its compatibility boundary can be tested independently.
+The next extension-side slice is a pure, reentrant Bison parser that consumes these tokens and builds a neutral C AST.
 
-1. Infer the same result units for `+`, `-`, `*`, `/`, and `**` as the corresponding `Quantity` methods.
-2. Model scalar-left multiplication and division, including the `rdiv()` reciprocal-unit result.
-3. Keep scalar-left addition, subtraction, and exponentiation invalid.
-4. Preserve the existing `Quantity` method diagnostics and stable identifiers for invalid dimensions or powers.
-5. Decide how analysis configuration represents the fact that operator syntax requires `ext-yumemi` at runtime.
-6. Add extension-present and extension-absent consumer fixtures without making the pure-PHP package require the module.
+1. Port the current yumemi.php grammar without performing registry or unit lookup in parser actions.
+2. Preserve exact numeric lexemes and zero-based, half-open byte spans.
+3. Build nodes in an arena so syntax failures have one cleanup path.
+4. Return structured syntax failures that the PHP wrapper can translate into its existing exception and formatter types.
+5. Differentially compare AST kinds, values, grouping, and spans against the generated PHP parser.
+6. Add an explicit parser ABI version before yumemi.php selects the native path. Its selection logic must also check
+   `NativeLexer::isCompatible()` and retain the PHP lexer as the fallback when PCRE versions differ.
 
-Method-call conformance fixtures remain authoritative. Operator fixtures should prove syntax adaptation and equivalence,
-not encode a parallel model of unit arithmetic.
+The yumemi.php fallback parser and its bounded LRU cache remain authoritative until the native path passes the complete
+parser and conformance corpora.
 
 ## Later slices
 
 After end-to-end runtime behavior is stable:
 
+- finish the separate yumemi.php PHPStan operator work;
 - settle Composer `suggest` metadata and the version relationship between yumemi.php and ext-yumemi; and
 - add `package.xml`, release metadata, installation documentation, and additional platform jobs as support is proven.
 

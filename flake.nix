@@ -65,11 +65,29 @@
             checkSupport = true;
           }
         ) phpVersions;
+        generatedSources =
+          pkgs.runCommand "php-yumemi-generated-sources"
+            {
+              nativeBuildInputs = [
+                phpVersions.php82
+                pkgs.flex
+              ];
+            }
+            ''
+              cp -R ${src} source
+              chmod -R u+w source
+              cd source
+              bash scripts/generate-lexer.sh --check
+              touch $out
+            '';
         devShellsByPhp = lib.mapAttrs (
           name: php:
           pkgs.mkShell {
             inputsFrom = [ packagesByPhp.${name} ];
-            packages = [ pkgs.clang-tools ];
+            packages = [
+              pkgs.clang-tools
+              pkgs.flex
+            ];
 
             shellHook = ''
               mkdir -p .direnv/include
@@ -86,6 +104,7 @@
         };
         checks = checksByPhp // {
           formatting = treefmt.config.build.check self;
+          generated-sources = generatedSources;
         };
         devShells = devShellsByPhp // {
           default = devShellsByPhp.php82;
