@@ -1,16 +1,25 @@
 # php-yumemi
 
-Scaffold for an experimental native PHP extension companion to
+Experimental native PHP extension companion to
 [yumemi.php](https://github.com/jbboehr/yumemi.php).
 
-This repository currently establishes the extension's build, test, formatting, and licensing conventions. The module
-loads as `yumemi` and reports its development version, but it does not yet expose userland classes, functions, or
-constants.
+The module registers `jbboehr\Yumemi\InternalQuantity`, an abstract base class whose object handler delegates arithmetic
+operators to public methods implemented by userland descendants. Arithmetic semantics remain in yumemi.php; the
+extension only admits operator syntax.
 
 ## Status
 
-This is an early scaffold, not a supported release. The initial build targets PHP 8.2 through 8.5 on non-thread-safe
-builds. It does not yet integrate with yumemi.php, publish packages, or claim Windows support.
+This is an early experiment, not a supported release. The initial build targets PHP 8.2 through 8.5 on non-thread-safe
+builds. Cross-repository integration, packaging, Windows support, and ZTS support remain unfinished or unverified.
+
+## Operators
+
+For descendants of `InternalQuantity`, the extension maps `+`, `-`, `*`, and `/` to `add()`, `sub()`, `mul()`, and
+`div()` respectively. It passes the other operand to the selected method and returns the method's result unchanged.
+
+Multiplication is treated as commutative at the handler boundary, so both `$quantity * 2` and `2 * $quantity` delegate
+to `$quantity->mul(2)`. PHP normalizes some `ZEND_MUL` expressions before invoking object handlers, making the original
+operand order unavailable. Scalar-left `+`, `-`, and `/` remain unsupported.
 
 ## Build
 
@@ -51,7 +60,8 @@ PHPT suite against every supported PHP version and verify Nix formatting with `n
 - `nix/derivation.nix` packages the extension for the flake's supported PHP versions.
 - `php_yumemi.h` contains module metadata.
 - `src/extension.c` registers the module and its `phpinfo()` output.
-- `tests/` contains PHPT smoke tests.
+- `src/internal_quantity.c` registers the userland seam and operator handler.
+- `tests/` contains PHPT behavior tests.
 
 ## License
 

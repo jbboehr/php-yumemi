@@ -14,10 +14,16 @@
 #include "ext/standard/info.h"
 
 #include "../php_yumemi.h"
+#include "internal_quantity.h"
 
 #if PHP_VERSION_ID < 80200
 #error php-yumemi requires PHP 8.2 or newer
 #endif
+
+static PHP_MINIT_FUNCTION(yumemi)
+{
+    return yumemi_register_internal_quantity();
+}
 
 static PHP_MINFO_FUNCTION(yumemi)
 {
@@ -29,7 +35,15 @@ static PHP_MINFO_FUNCTION(yumemi)
 }
 
 zend_module_entry yumemi_module_entry = {
-    STANDARD_MODULE_HEADER,     PHP_YUMEMI_NAME, NULL, NULL, NULL, NULL, NULL, PHP_MINFO(yumemi), PHP_YUMEMI_VERSION,
+    STANDARD_MODULE_HEADER,
+    PHP_YUMEMI_NAME,
+    NULL,
+    PHP_MINIT(yumemi),
+    NULL,
+    NULL,
+    NULL,
+    PHP_MINFO(yumemi),
+    PHP_YUMEMI_VERSION,
     STANDARD_MODULE_PROPERTIES,
 };
 

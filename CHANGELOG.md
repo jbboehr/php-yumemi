@@ -9,3 +9,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Initial loadable PHP extension scaffold and PHPT smoke test.
+- Add the abstract `jbboehr\Yumemi\InternalQuantity` seam and delegate arithmetic operators to userland methods.
