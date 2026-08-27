@@ -10,16 +10,21 @@ extension only admits operator syntax.
 ## Status
 
 This is an early experiment, not a supported release. The initial build targets PHP 8.2 through 8.5 on non-thread-safe
-builds. Cross-repository integration, packaging, Windows support, and ZTS support remain unfinished or unverified.
+builds. Packaging, Windows support, and ZTS support remain unfinished or unverified.
 
 ## Operators
 
-For descendants of `InternalQuantity`, the extension maps `+`, `-`, `*`, and `/` to `add()`, `sub()`, `mul()`, and
-`div()` respectively. It passes the other operand to the selected method and returns the method's result unchanged.
+For descendants of `InternalQuantity`, the extension maps `+`, `-`, `*`, `/`, and `**` to `add()`, `sub()`, `mul()`,
+`div()`, and `pow()` respectively. It passes the other operand to the selected method and returns the method's result
+unchanged.
 
 Multiplication is treated as commutative at the handler boundary, so both `$quantity * 2` and `2 * $quantity` delegate
 to `$quantity->mul(2)`. PHP normalizes some `ZEND_MUL` expressions before invoking object handlers, making the original
-operand order unavailable. Scalar-left `+`, `-`, and `/` remain unsupported.
+operand order unavailable. Scalar-left division delegates `2 / $quantity` to `$quantity->rdiv(2)`. Scalar-left `+`,
+`-`, and `**` remain unsupported.
+
+The handler forwards the selected operand unchanged. The canonical yumemi.php `Quantity::rdiv(int|Rational)` signature
+owns numerator validation, just as the other userland arithmetic methods own their operand rules.
 
 ## Build
 

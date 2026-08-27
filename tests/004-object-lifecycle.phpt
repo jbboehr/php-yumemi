@@ -23,6 +23,21 @@ final class StatefulProbe extends \jbboehr\Yumemi\InternalQuantity
     {
         return new self($this->value * $right, $this->unit);
     }
+
+    public function div(int $right): self
+    {
+        return new self(intdiv($this->value, $right), $this->unit);
+    }
+
+    public function rdiv(int $left): self
+    {
+        return new self(intdiv($left, $this->value), '1/' . $this->unit);
+    }
+
+    public function pow(int $right): self
+    {
+        return new self($this->value ** $right, $this->unit . '^' . $right);
+    }
 }
 
 $left = new StatefulProbe(2, 'meter');
@@ -38,6 +53,23 @@ $product = $clone * 2;
 
 var_dump($clone !== $left);
 var_dump($clone->value, $clone->unit, $product->value);
+
+$power = new StatefulProbe(2, 'meter');
+$power **= 3;
+
+$quantityLeftQuotient = new StatefulProbe(12, 'meter');
+$quantityLeftQuotient /= 3;
+
+$scalarLeftQuotient = 12;
+$scalarLeftQuotient /= new StatefulProbe(3, 'meter');
+
+$refcountedLeftQuotient = '15';
+$refcountedLeftQuotient /= new StatefulProbe(3, 'meter');
+
+var_dump($power->value, $power->unit);
+var_dump($quantityLeftQuotient->value, $quantityLeftQuotient->unit);
+var_dump($scalarLeftQuotient->value, $scalarLeftQuotient->unit);
+var_dump($refcountedLeftQuotient->value, $refcountedLeftQuotient->unit);
 
 $cycle = new StatefulProbe(1, 'second');
 $cycle->peer = $cycle;
@@ -56,4 +88,12 @@ bool(true)
 int(5)
 string(5) "meter"
 int(10)
+int(8)
+string(7) "meter^3"
+int(4)
+string(5) "meter"
+int(4)
+string(7) "1/meter"
+int(5)
+string(7) "1/meter"
 NULL

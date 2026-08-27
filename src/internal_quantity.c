@@ -45,6 +45,7 @@ static zend_result yumemi_internal_quantity_do_operation(zend_uchar opcode, zval
     zval *receiver;
     zval *argument;
     zval return_value;
+    bool receiver_is_right = false;
 
     if (right == NULL) {
         return FAILURE;
@@ -54,10 +55,11 @@ static zend_result yumemi_internal_quantity_do_operation(zend_uchar opcode, zval
     if (Z_TYPE_P(left) == IS_OBJECT && instanceof_function(Z_OBJCE_P(left), yumemi_internal_quantity_class_entry)) {
         receiver = left;
         argument = right;
-    } else if (opcode == ZEND_MUL && Z_TYPE_P(right) == IS_OBJECT &&
+    } else if ((opcode == ZEND_MUL || opcode == ZEND_DIV) && Z_TYPE_P(right) == IS_OBJECT &&
                instanceof_function(Z_OBJCE_P(right), yumemi_internal_quantity_class_entry)) {
         receiver = right;
         argument = left;
+        receiver_is_right = true;
     } else {
         return FAILURE;
     }
@@ -76,8 +78,17 @@ static zend_result yumemi_internal_quantity_do_operation(zend_uchar opcode, zval
             method_name_length = sizeof("mul") - 1;
             break;
         case ZEND_DIV:
-            method_name = "div";
-            method_name_length = sizeof("div") - 1;
+            if (receiver_is_right) {
+                method_name = "rdiv";
+                method_name_length = sizeof("rdiv") - 1;
+            } else {
+                method_name = "div";
+                method_name_length = sizeof("div") - 1;
+            }
+            break;
+        case ZEND_POW:
+            method_name = "pow";
+            method_name_length = sizeof("pow") - 1;
             break;
         default:
             return FAILURE;

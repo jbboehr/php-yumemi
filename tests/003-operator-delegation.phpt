@@ -25,6 +25,16 @@ final class OperatorProbe extends \jbboehr\Yumemi\InternalQuantity
     {
         return 'div:' . $right;
     }
+
+    public function pow(mixed $right): string
+    {
+        return 'pow:' . $right;
+    }
+
+    public function rdiv(mixed $left): string
+    {
+        return 'rdiv:' . $left;
+    }
 }
 
 final class MultiplicationProbe extends \jbboehr\Yumemi\InternalQuantity
@@ -45,6 +55,8 @@ echo $probe + 2, PHP_EOL;
 echo $probe - 3, PHP_EOL;
 echo $probe * 4, PHP_EOL;
 echo $probe / 5, PHP_EOL;
+echo $probe ** 6, PHP_EOL;
+echo 7 / $probe, PHP_EOL;
 
 $left = new MultiplicationProbe('left');
 $right = new MultiplicationProbe('right');
@@ -57,5 +69,7 @@ add:2
 sub:3
 mul:4
 div:5
+pow:6
+rdiv:7
 left:right
 right:left

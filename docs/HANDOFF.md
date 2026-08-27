@@ -29,8 +29,9 @@ The repository now contains:
 - PHPT coverage for registration, operator dispatch, compound assignment, object lifecycle, and failures.
 
 The local checkout at `tmp/yumemi.php` contains the separate method-only library seam: an empty PHP fallback
-`InternalQuantity`, `Quantity extends InternalQuantity`, and consumer/runtime coverage. Those library changes remain a
-separate worktree concern and should be reviewed and committed in the yumemi.php repository, not from this repository.
+`InternalQuantity`, `Quantity extends InternalQuantity`, the canonical `rdiv()` method, PHPStan method inference, and
+consumer/runtime integration coverage. Those library changes remain a separate repository concern and must be committed
+from the yumemi.php checkout, not from this repository.
 
 ## Boundary to preserve
 
@@ -38,8 +39,8 @@ The extension is an optional syntax adapter, not a second unit engine.
 
 1. yumemi.php remains the semantic authority for exact arithmetic, unit parsing, normalization, conversion,
    registry-context safety, exceptions, and result construction.
-2. Portable code continues to use `Quantity::add()`, `sub()`, `mul()`, and `div()`. Installing the extension must not be
-   necessary to exchange quantities or call the method API.
+2. Portable code continues to use `Quantity::add()`, `sub()`, `mul()`, `div()`, `pow()`, and `rdiv()`. Installing the
+   extension must not be necessary to exchange quantities or call the method API.
 3. The C handler delegates to public userland methods. It must not parse units, compare registries, convert values, or
    construct `Quantity` objects itself.
 4. PHPStan support belongs under yumemi.php's existing `src/PHPStan` boundary and must model the same method semantics.
@@ -54,13 +55,19 @@ The internal base installs one stable object-handler table on userland descendan
 | `-` | `ZEND_SUB` | `sub()` |
 | `*` | `ZEND_MUL` | `mul()` |
 | `/` | `ZEND_DIV` | `div()` |
+| `**` | `ZEND_POW` | `pow()` |
+
+When the quantity is the right operand of `ZEND_DIV`, the handler instead delegates to `rdiv()` on that quantity and
+forwards the left operand unchanged. The canonical yumemi.php `Quantity::rdiv(int|Rational)` signature owns numerator
+validation; the C adapter does not duplicate that userland rule.
 
 Receiver policy is deliberate:
 
 - when the handler receives a quantity as its left operand, it uses that quantity as the receiver;
 - variable-by-variable quantity multiplication preserves the written left receiver;
 - scalar multiplication is supported from either side and calls the quantity receiver's `mul()` method;
-- scalar-left `+`, `-`, and `/` remain unsupported and follow PHP's normal `TypeError` path; and
+- scalar-left division calls the right quantity's `rdiv()` method, whose signature defines the accepted numerator types;
+- scalar-left `+`, `-`, and exponentiation remain unsupported and follow PHP's normal `TypeError` path; and
 - unsupported opcodes return `FAILURE` so PHP retains its normal failure behavior.
 
 PHP may swap any `ZEND_MUL` operands before invoking object handlers. Consequently, `$quantity * 2` and literal
@@ -88,7 +95,7 @@ constraints on the pure-PHP library while the cross-repository API remains exper
 | --- | --- |
 | `001-extension-loads.phpt` | Module loading and version metadata |
 | `002-internal-quantity.phpt` | Internal, abstract, non-instantiable, subclassable base class |
-| `003-operator-delegation.phpt` | Four method mappings and left-receiver order for two quantity variables |
+| `003-operator-delegation.phpt` | Arithmetic, power, reverse-division mappings, and quantity multiplication order |
 | `004-object-lifecycle.phpt` | Compound assignment, clone handlers, declared/readonly properties, and GC |
 | `005-operator-failures.phpt` | Missing methods, unsupported operators, invalid arguments, scalar policy, and exceptions |
 
@@ -121,23 +128,17 @@ The handler slice has passed all five PHPTs on PHP 8.2, 8.3, 8.4, and 8.5 NTS bu
 PHP 8.2 build and formatting checks. When new files are still untracked, the default Git-backed flake source omits them;
 stage them first or verify from a clean source snapshot containing the complete intended change.
 
-## Next slice: end-to-end yumemi.php behavior
+## Next slice: Quantity operator support in PHPStan
 
-The next work belongs primarily in the yumemi.php checkout and should use the locally built extension without moving
-semantic logic into C.
+The runtime integration is covered in the yumemi.php checkout. The next work belongs in its PHPStan adapter and must
+model the optional extension syntax without moving semantic logic into C or requiring the extension at analysis time.
 
-1. Load the local `yumemi.so` before Composer autoloading and verify that the internal base suppresses fallback-class
-   autoloading without declaration collisions.
-2. Add focused integration fixtures comparing each operator result with the corresponding `Quantity` method result.
-3. Cover compatible-unit conversion, quantity multiplication/division, integer and `Rational` scaling, and
-   cross-registry rejection.
-4. Compare variable and temporary quantity multiplication forms and decide whether Zend's commutative operand swapping
-   changes an observable symbolic-unit result or only an equivalent representation.
-5. Verify the exact exception categories and messages remain those produced by the userland methods.
-6. Exercise normal and optimized Composer autoloading with the extension present, plus the existing extension-absent
-   fallback path.
-7. Recheck cloning, serialization, garbage collection, and consumer behavior using the real `Quantity` class.
-8. Run yumemi.php's focused checks, `composer check`, and the appropriate supported-PHP Nix matrix.
+1. Infer the same result units for `+`, `-`, `*`, `/`, and `**` as the corresponding `Quantity` methods.
+2. Model scalar-left multiplication and division, including the `rdiv()` reciprocal-unit result.
+3. Keep scalar-left addition, subtraction, and exponentiation invalid.
+4. Preserve the existing `Quantity` method diagnostics and stable identifiers for invalid dimensions or powers.
+5. Decide how analysis configuration represents the fact that operator syntax requires `ext-yumemi` at runtime.
+6. Add extension-present and extension-absent consumer fixtures without making the pure-PHP package require the module.
 
 Method-call conformance fixtures remain authoritative. Operator fixtures should prove syntax adaptation and equivalence,
 not encode a parallel model of unit arithmetic.
@@ -146,8 +147,6 @@ not encode a parallel model of unit arithmetic.
 
 After end-to-end runtime behavior is stable:
 
-- teach yumemi.php's PHPStan adapter the exact optional operator surface;
-- add extension-present and extension-absent static-analysis consumer fixtures;
 - settle Composer `suggest` metadata and the version relationship between yumemi.php and ext-yumemi; and
 - add `package.xml`, release metadata, installation documentation, and additional platform jobs as support is proven.
 
@@ -159,7 +158,7 @@ Do not answer these accidentally inside an unrelated implementation patch:
 - Should a future version declare abstract arithmetic signatures on the internal base?
 - Must quantity-by-quantity multiplication preserve the source-level left receiver even when Zend has reordered the
   operands, or is an equivalent commutative result sufficient?
-- Should scalar-left `+`, `-`, or `/` ever gain semantics? They are currently deliberately unsupported.
+- Should scalar-left `+` or `-` ever gain semantics? They are currently deliberately unsupported.
 - How does PHPStan discover that operator syntax is available in a particular application environment?
 - Which OS, ZTS, sanitizer, and debug-build combinations are release requirements?
 - Does the extension need a public C header/API, or can native declarations remain private?
