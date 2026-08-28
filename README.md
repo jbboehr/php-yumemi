@@ -6,7 +6,8 @@ Experimental native PHP extension companion to
 The module registers `jbboehr\Yumemi\InternalQuantity`, an abstract base class whose object handler delegates arithmetic
 operators to public methods implemented by userland descendants. Arithmetic and unit semantics remain in yumemi.php. In
 addition to admitting operator syntax, the extension contains an experimental native lexer for the Yumemi
-unit-expression grammar; it does not resolve unit names or construct semantic unit expressions.
+unit-expression grammar and a native syntax parser that builds a neutral debug AST. Neither component resolves unit
+names or constructs semantic unit expressions.
 
 ## Status
 
@@ -44,18 +45,28 @@ To try the uninstalled extension:
 php -d extension="$PWD/modules/yumemi.so" -r 'var_dump(extension_loaded("yumemi"));'
 ```
 
-The generated lexer sources are committed, so Flex is not required for an ordinary build. Maintainers can regenerate
-them with PHP and Flex using:
+The generated lexer and parser sources are committed, so Flex and Bison are not required for an ordinary build.
+Maintainers can regenerate them with PHP, Flex, and Bison using:
 
 ```console
-scripts/generate-lexer.sh
-scripts/generate-lexer.sh --check
+make generate-sources
+make check-generated-sources
 ```
+
+The corresponding individual targets are `generate-lexer`, `generate-parser`, `check-generated-lexer`, and
+`check-generated-parser`. These targets are opt-in; the ordinary build always uses the committed generated sources.
 
 `jbboehr\Yumemi\Parser\NativeLexer` is an internal integration seam. Its `tokenize()` method currently exposes token
 text and zero-based, half-open byte spans for parity testing; applications should not depend on this experimental API.
 Because yumemi.php classifies Unicode through its runtime PCRE, callers must check `isCompatible()` before selecting the
 native path. `tokenize()` throws if the committed Unicode tables cannot guarantee parity with that PCRE version.
+
+`jbboehr\Yumemi\Parser\NativeParser` is the corresponding internal parser seam. `parse()` returns nested arrays with a
+node `kind`, a zero-based half-open byte `start`/`end` span, and either exact leaf `text` or `left`/`right` children.
+Synthesized nodes have null spans. Syntax failures throw the internal `NativeParseException`, whose `input`, `start`,
+and `end` properties support differential tests and eventual translation to yumemi.php's public error types. Callers
+must check `isCompatible()` before selecting this experimental path; the current parser ABI is exposed as
+`NativeParser::ABI_VERSION`.
 
 ### Nix
 
@@ -82,7 +93,11 @@ PHPT suite against every supported PHP version and verify Nix formatting with `n
 - `src/internal_quantity.c` registers the userland seam and operator handler.
 - `src/parser/scanner.l` defines the reentrant Flex scanner.
 - `src/parser/native_lexer.c` owns Unicode classification, resource limits, and the internal PHP lexer seam.
+- `src/parser/parser.y` defines the pure reentrant Bison grammar.
+- `src/parser/native_parser.c` owns the arena AST, structured failures, and internal PHP parser seam.
 - `scripts/generate-lexer.sh` regenerates and verifies the committed scanner and Unicode tables.
+- `scripts/generate-parser.sh` regenerates and verifies the committed C parser.
+- `Makefile.frag` provides opt-in maintainer targets for regenerating and checking generated sources.
 - `tests/` contains PHPT behavior tests.
 
 ## License

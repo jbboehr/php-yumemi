@@ -13,3 +13,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add the abstract `jbboehr\Yumemi\InternalQuantity` seam and delegate arithmetic operators to userland methods.
 - Add a reentrant native lexer for Yumemi unit expressions with version-gated Unicode parity, byte spans, and resource
   limits.
+- Add a pure reentrant native parser with an arena-backed neutral AST, structured syntax failures, byte spans, and an
+  internal debug API for differential testing against yumemi.php.
+- Add opt-in Make targets for regenerating and checking the committed Flex and Bison sources.

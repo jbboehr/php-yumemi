@@ -424,7 +424,7 @@ const char *yumemi_lexer_limit_name(yumemi_lexer_limit limit)
     }
 }
 
-static void yumemi_native_lexer_throw_limit(const yumemi_lexer_error *error)
+void yumemi_lexer_throw_limit(const yumemi_lexer_error *error)
 {
     zend_throw_exception_ex(spl_ce_LengthException,
                             0,
@@ -443,7 +443,7 @@ static zval *yumemi_native_lexer_runtime_pcre_version(void)
     return pcre_version != NULL && Z_TYPE_P(pcre_version) == IS_STRING ? pcre_version : NULL;
 }
 
-static bool yumemi_native_lexer_is_compatible(void)
+bool yumemi_lexer_is_compatible(void)
 {
     zval *pcre_version = yumemi_native_lexer_runtime_pcre_version();
 
@@ -451,7 +451,7 @@ static bool yumemi_native_lexer_is_compatible(void)
            memcmp(Z_STRVAL_P(pcre_version), YUMEMI_UNICODE_PCRE_VERSION, sizeof(YUMEMI_UNICODE_PCRE_VERSION) - 1) == 0;
 }
 
-static void yumemi_native_lexer_throw_incompatible_pcre(void)
+void yumemi_lexer_throw_incompatible_pcre(void)
 {
     zval *pcre_version = yumemi_native_lexer_runtime_pcre_version();
 
@@ -469,7 +469,7 @@ static PHP_METHOD(NativeLexer, isCompatible)
 {
     ZEND_PARSE_PARAMETERS_NONE();
 
-    RETURN_BOOL(yumemi_native_lexer_is_compatible());
+    RETURN_BOOL(yumemi_lexer_is_compatible());
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_lexer_tokenize, 0, 1, IS_ARRAY, 0)
@@ -490,8 +490,8 @@ static PHP_METHOD(NativeLexer, tokenize)
     Z_PARAM_STR(input)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (!yumemi_native_lexer_is_compatible()) {
-        yumemi_native_lexer_throw_incompatible_pcre();
+    if (!yumemi_lexer_is_compatible()) {
+        yumemi_lexer_throw_incompatible_pcre();
         RETURN_THROWS();
     }
 
@@ -499,7 +499,7 @@ static PHP_METHOD(NativeLexer, tokenize)
         context.error = (yumemi_lexer_error){
             YUMEMI_LEXER_LIMIT_INPUT_BYTES, YUMEMI_LEXER_INPUT_BYTES_LIMIT, ZSTR_LEN(input), 0, ZSTR_LEN(input),
         };
-        yumemi_native_lexer_throw_limit(&context.error);
+        yumemi_lexer_throw_limit(&context.error);
         RETURN_THROWS();
     }
 
@@ -534,7 +534,7 @@ static PHP_METHOD(NativeLexer, tokenize)
     yumemi_lex_destroy(scanner);
 
     if (token == YUMEMI_TOKEN_ERROR) {
-        yumemi_native_lexer_throw_limit(&context.error);
+        yumemi_lexer_throw_limit(&context.error);
         RETURN_THROWS();
     }
 }

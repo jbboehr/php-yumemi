@@ -16,6 +16,7 @@
 #include "../php_yumemi.h"
 #include "internal_quantity.h"
 #include "parser/native_lexer.h"
+#include "parser/native_parser.h"
 
 #if PHP_VERSION_ID < 80200
 #error php-yumemi requires PHP 8.2 or newer
@@ -27,7 +28,11 @@ static PHP_MINIT_FUNCTION(yumemi)
         return FAILURE;
     }
 
-    return yumemi_register_native_lexer();
+    if (yumemi_register_native_lexer() == FAILURE) {
+        return FAILURE;
+    }
+
+    return yumemi_register_native_parser();
 }
 
 static PHP_MINFO_FUNCTION(yumemi)

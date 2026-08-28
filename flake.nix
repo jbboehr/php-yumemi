@@ -70,6 +70,7 @@
             {
               nativeBuildInputs = [
                 phpVersions.php82
+                pkgs.bison
                 pkgs.flex
               ];
             }
@@ -78,6 +79,7 @@
               chmod -R u+w source
               cd source
               bash scripts/generate-lexer.sh --check
+              bash scripts/generate-parser.sh --check
               touch $out
             '';
         devShellsByPhp = lib.mapAttrs (
@@ -85,6 +87,7 @@
           pkgs.mkShell {
             inputsFrom = [ packagesByPhp.${name} ];
             packages = [
+              pkgs.bison
               pkgs.clang-tools
               pkgs.flex
             ];

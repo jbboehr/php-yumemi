@@ -49,10 +49,13 @@ typedef enum
     YUMEMI_LEXER_LIMIT_TOKEN_BYTES,
 } yumemi_lexer_limit;
 
+struct yumemi_ast_node;
+
 typedef struct
 {
     const char *text;
     size_t length;
+    struct yumemi_ast_node *node;
 } yumemi_lexer_value;
 
 typedef struct
@@ -92,6 +95,9 @@ void yumemi_lexer_context_init(yumemi_lexer_context *context, const unsigned cha
 size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t length, yumemi_token_type *type);
 const char *yumemi_lexer_token_name(yumemi_token_type type);
 const char *yumemi_lexer_limit_name(yumemi_lexer_limit limit);
+bool yumemi_lexer_is_compatible(void);
+void yumemi_lexer_throw_incompatible_pcre(void);
+void yumemi_lexer_throw_limit(const yumemi_lexer_error *error);
 
 zend_result yumemi_register_native_lexer(void);
 

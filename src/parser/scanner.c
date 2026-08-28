@@ -866,6 +866,7 @@ static const flex_int16_t yy_chk[77] =
     do {                                                                                                \
         yylval->text = yytext;                                                                         \
         yylval->length = (size_t)yyleng;                                                               \
+        yylval->node = NULL;                                                                           \
         if (!yumemi_lexer_accept_token(yyextra, (token_type), yylloc->start, yylloc->end)) {          \
             return YUMEMI_TOKEN_ERROR;                                                                 \
         }                                                                                               \
