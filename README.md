@@ -60,13 +60,15 @@ The corresponding individual targets are `generate-lexer`, `generate-parser`, `c
 text and zero-based, half-open byte spans for parity testing; applications should not depend on this experimental API.
 Because yumemi.php classifies Unicode through its runtime PCRE, callers must check `isCompatible()` before selecting the
 native path. `tokenize()` throws if the committed Unicode tables cannot guarantee parity with that PCRE version.
+Resource failures from either native syntax seam throw the internal `NativeLimitException`, whose `limit`, `maximum`,
+`observed`, `start`, and `end` properties allow yumemi.php to reproduce its public limit exception contract.
 
 `jbboehr\Yumemi\Parser\NativeParser` is the corresponding internal parser seam. `parse()` returns nested arrays with a
 node `kind`, a zero-based half-open byte `start`/`end` span, and either exact leaf `text` or `left`/`right` children.
 Synthesized nodes have null spans. Syntax failures throw the internal `NativeParseException`, whose `input`, `start`,
-and `end` properties support differential tests and eventual translation to yumemi.php's public error types. Callers
-must check `isCompatible()` before selecting this experimental path; the current parser ABI is exposed as
-`NativeParser::ABI_VERSION`.
+`end`, `unexpected`, and `expected` properties support differential tests and translation to yumemi.php's public error
+types without parsing Bison's diagnostic prose. Callers must check `isCompatible()` before selecting this experimental
+path; the current parser ABI is exposed as `NativeParser::ABI_VERSION`.
 
 ### Nix
 

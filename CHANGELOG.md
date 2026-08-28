@@ -15,4 +15,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   limits.
 - Add a pure reentrant native parser with an arena-backed neutral AST, structured syntax failures, byte spans, and an
   internal debug API for differential testing against yumemi.php.
+- Expose machine-readable unexpected/expected token lists and resource-limit metadata from native parser failures.
 - Add opt-in Make targets for regenerating and checking the committed Flex and Bison sources.

@@ -108,6 +108,7 @@ constraints on the pure-PHP library while the cross-repository API remains exper
 | `008-native-lexer-compatibility.phpt` | Shared fail-closed lexer/parser runtime PCRE compatibility gate |
 | `009-native-parser.phpt` | Parser ABI, AST kinds, precedence, exact lexemes, and byte spans |
 | `010-native-parser-failures.phpt` | Structured syntax failures and inherited lexer resource limits |
+| `011-native-error-metadata.phpt` | Machine-readable unexpected/expected tokens and resource-limit metadata |
 
 ## Verification
 
@@ -137,7 +138,7 @@ nix flake check --keep-going -L
 Maintainers can regenerate or verify both committed Flex/Bison outputs after configuring the extension with
 `make generate-sources` or `make check-generated-sources`. The ordinary build never regenerates them implicitly.
 
-The complete ten-test PHPT suite passes on PHP 8.2, 8.3, 8.4, and 8.5 NTS builds on x86_64 Linux. The parser also
+The complete eleven-test PHPT suite passes on PHP 8.2, 8.3, 8.4, and 8.5 NTS builds on x86_64 Linux. The parser also
 extends the generated-source check to Bison output. When new files are still untracked, the default Git-backed flake
 source omits them; stage them first or verify from a clean source snapshot containing the complete intended change.
 
@@ -149,7 +150,10 @@ now consumes the same reentrant scanner and returns a nested neutral AST through
 - leaf nodes contain `kind`, `start`, `end`, and exact source `text`;
 - binary nodes contain `kind`, `start`, `end`, `left`, and `right`;
 - synthesized nodes such as the `-1` used for unary negation have null spans;
-- syntax failures throw internal `NativeParseException` objects with `input`, `start`, and `end`; and
+- syntax failures throw internal `NativeParseException` objects with `input`, `start`, `end`, `unexpected`, and
+  `expected`;
+- resource failures throw internal `NativeLimitException` objects with `limit`, `maximum`, `observed`, `start`, and
+  `end`; and
 - `NativeParser::ABI_VERSION` is `1`, while `NativeParser::isCompatible()` shares the lexer's fail-closed PCRE gate.
 
 The grammar performs no registry or unit lookup. A deterministic differential corpus of 520 valid expressions and ten
@@ -161,7 +165,8 @@ The next cross-repository slice belongs in yumemi.php:
 
 1. Add a small adapter that turns the neutral native arrays into the existing PHP AST classes.
 2. Select the native path only when `NativeParser` exists, `ABI_VERSION === 1`, and `isCompatible()` is true.
-3. Translate `NativeParseException` into yumemi.php's existing `ParseException` and source formatter contract.
+3. Translate `NativeParseException` and `NativeLimitException` into yumemi.php's existing public parser exception and
+   source formatter contracts.
 4. Retain the generated PHP lexer/parser as the fallback for missing, incompatible, or future-ABI extensions.
 5. Run the complete parser, formatter round-trip, syntax-error, conformance, and consumer corpora against both paths.
 

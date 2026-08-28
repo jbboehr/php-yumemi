@@ -54,7 +54,7 @@ static void yumemi_parser_error(yumemi_lexer_location *location,
 %define api.prefix {yumemi_parser_}
 %define api.value.type {yumemi_lexer_value}
 %define api.location.type {yumemi_lexer_location}
-%define parse.error detailed
+%define parse.error custom
 %locations
 
 %parse-param {void *scanner}
@@ -134,3 +134,34 @@ identifier:
     ;
 
 %%
+
+static int yyreport_syntax_error(const yypcontext_t *parser_context,
+                                 void *scanner,
+                                 yumemi_parse_context *context)
+{
+    yysymbol_kind_t expected_symbols[YYNTOKENS];
+    const char *expected_names[YYNTOKENS];
+    yysymbol_kind_t unexpected_symbol = yypcontext_token(parser_context);
+    const yumemi_lexer_location *location = yypcontext_location(parser_context);
+    int expected_count;
+    int index;
+
+    (void)scanner;
+    expected_count = yypcontext_expected_tokens(parser_context, expected_symbols, YYNTOKENS);
+    if (expected_count < 0) {
+        return expected_count;
+    }
+
+    for (index = 0; index < expected_count; ++index) {
+        expected_names[index] = yysymbol_name(expected_symbols[index]);
+    }
+    yumemi_parse_context_set_syntax_error(context,
+                                          location,
+                                          unexpected_symbol == YYSYMBOL_YYEMPTY
+                                              ? NULL
+                                              : yysymbol_name(unexpected_symbol),
+                                          expected_names,
+                                          (size_t)expected_count);
+
+    return 0;
+}

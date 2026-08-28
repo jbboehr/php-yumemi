@@ -58,6 +58,9 @@ typedef struct
     bool has_error;
     yumemi_lexer_location error_location;
     const char *error_message;
+    const char *unexpected_token;
+    const char **expected_tokens;
+    size_t expected_token_count;
 } yumemi_parse_context;
 
 void yumemi_parse_context_init(yumemi_parse_context *context);
@@ -65,6 +68,11 @@ void yumemi_parse_context_destroy(yumemi_parse_context *context);
 void yumemi_parse_context_set_error(yumemi_parse_context *context,
                                     const yumemi_lexer_location *location,
                                     const char *message);
+void yumemi_parse_context_set_syntax_error(yumemi_parse_context *context,
+                                           const yumemi_lexer_location *location,
+                                           const char *unexpected_token,
+                                           const char *const *expected_tokens,
+                                           size_t expected_token_count);
 
 yumemi_ast_node *yumemi_ast_make_leaf(yumemi_parse_context *context,
                                       yumemi_ast_kind kind,

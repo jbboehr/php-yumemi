@@ -77,6 +77,96 @@ void yumemi_parse_context_set_error(yumemi_parse_context *context,
     context->error_message = yumemi_parser_arena_string(context, message, strlen(message));
 }
 
+static char *yumemi_parser_format_syntax_error(yumemi_parse_context *context,
+                                               const char *unexpected_token,
+                                               const char *const *expected_tokens,
+                                               size_t expected_token_count)
+{
+    static const char syntax_error[] = "syntax error";
+    static const char unexpected_prefix[] = ", unexpected ";
+    static const char expecting_prefix[] = ", expecting ";
+    static const char alternative_separator[] = " or ";
+    /* Preserve Bison's prior detailed-message behavior: one of its five arguments was the unexpected token. */
+    bool include_expected = expected_token_count <= 4;
+    size_t length = sizeof(syntax_error) - 1;
+    size_t index;
+    char *message;
+    char *cursor;
+
+    if (unexpected_token == NULL) {
+        return yumemi_parser_arena_string(context, syntax_error, length);
+    }
+
+    length += sizeof(unexpected_prefix) - 1 + strlen(unexpected_token);
+    if (include_expected && expected_token_count > 0) {
+        length += sizeof(expecting_prefix) - 1;
+        for (index = 0; index < expected_token_count; ++index) {
+            if (index > 0) {
+                length += sizeof(alternative_separator) - 1;
+            }
+            length += strlen(expected_tokens[index]);
+        }
+    }
+
+    message = yumemi_parser_arena_alloc(context, length + 1);
+    cursor = message;
+#define YUMEMI_APPEND_LITERAL(literal)                                                                \
+    do {                                                                                              \
+        memcpy(cursor, (literal), sizeof(literal) - 1);                                               \
+        cursor += sizeof(literal) - 1;                                                                \
+    } while (0)
+    YUMEMI_APPEND_LITERAL(syntax_error);
+    YUMEMI_APPEND_LITERAL(unexpected_prefix);
+    memcpy(cursor, unexpected_token, strlen(unexpected_token));
+    cursor += strlen(unexpected_token);
+    if (include_expected && expected_token_count > 0) {
+        YUMEMI_APPEND_LITERAL(expecting_prefix);
+        for (index = 0; index < expected_token_count; ++index) {
+            if (index > 0) {
+                YUMEMI_APPEND_LITERAL(alternative_separator);
+            }
+            memcpy(cursor, expected_tokens[index], strlen(expected_tokens[index]));
+            cursor += strlen(expected_tokens[index]);
+        }
+    }
+#undef YUMEMI_APPEND_LITERAL
+    *cursor = '\0';
+
+    return message;
+}
+
+void yumemi_parse_context_set_syntax_error(yumemi_parse_context *context,
+                                           const yumemi_lexer_location *location,
+                                           const char *unexpected_token,
+                                           const char *const *expected_tokens,
+                                           size_t expected_token_count)
+{
+    size_t index;
+
+    if (context->has_error) {
+        return;
+    }
+
+    context->has_error = true;
+    context->error_location = *location;
+    context->error_message =
+        yumemi_parser_format_syntax_error(context, unexpected_token, expected_tokens, expected_token_count);
+    if (unexpected_token != NULL) {
+        context->unexpected_token =
+            yumemi_parser_arena_string(context, unexpected_token, strlen(unexpected_token));
+    }
+    if (expected_token_count == 0) {
+        return;
+    }
+
+    context->expected_tokens = yumemi_parser_arena_alloc(context, expected_token_count * sizeof(const char *));
+    context->expected_token_count = expected_token_count;
+    for (index = 0; index < expected_token_count; ++index) {
+        context->expected_tokens[index] =
+            yumemi_parser_arena_string(context, expected_tokens[index], strlen(expected_tokens[index]));
+    }
+}
+
 yumemi_ast_node *yumemi_ast_make_leaf(yumemi_parse_context *context,
                                       yumemi_ast_kind kind,
                                       const char *text,
@@ -250,6 +340,8 @@ static void yumemi_native_parser_throw_syntax_error(zend_string *input,
     size_t start = context->has_error ? context->error_location.start : fallback_offset;
     size_t end = context->has_error ? context->error_location.end : fallback_offset;
     zend_object *exception;
+    zval expected;
+    size_t index;
 
     zend_throw_exception_ex(yumemi_native_parse_exception_class, 0, "%s at bytes %zu..%zu", message, start, end);
     exception = EG(exception);
@@ -260,6 +352,19 @@ static void yumemi_native_parser_throw_syntax_error(zend_string *input,
     zend_update_property_str(yumemi_native_parse_exception_class, exception, ZEND_STRL("input"), input);
     zend_update_property_long(yumemi_native_parse_exception_class, exception, ZEND_STRL("start"), (zend_long)start);
     zend_update_property_long(yumemi_native_parse_exception_class, exception, ZEND_STRL("end"), (zend_long)end);
+    if (context->unexpected_token != NULL) {
+        zend_update_property_string(yumemi_native_parse_exception_class,
+                                    exception,
+                                    ZEND_STRL("unexpected"),
+                                    context->unexpected_token);
+    }
+
+    array_init_size(&expected, context->expected_token_count);
+    for (index = 0; index < context->expected_token_count; ++index) {
+        add_next_index_string(&expected, context->expected_tokens[index]);
+    }
+    zend_update_property(yumemi_native_parse_exception_class, exception, ZEND_STRL("expected"), &expected);
+    zval_ptr_dtor(&expected);
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_parser_is_compatible, 0, 0, _IS_BOOL, 0)
@@ -357,6 +462,8 @@ zend_result yumemi_register_native_parser(void)
     zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("input"), ZEND_ACC_PUBLIC);
     zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("start"), ZEND_ACC_PUBLIC);
     zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("end"), ZEND_ACC_PUBLIC);
+    zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("unexpected"), ZEND_ACC_PUBLIC);
+    zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("expected"), ZEND_ACC_PUBLIC);
 
     INIT_NS_CLASS_ENTRY(parser_entry, "jbboehr\\Yumemi\\Parser", "NativeParser", yumemi_native_parser_methods);
     native_parser_class = zend_register_internal_class(&parser_entry);
