@@ -17,3 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   internal debug API for differential testing against yumemi.php.
 - Expose machine-readable unexpected/expected token lists and resource-limit metadata from native parser failures.
 - Add opt-in Make targets for regenerating and checking the committed Flex and Bison sources.
+- Add a PIE package manifest for PHP 8.2 through 8.5 on Linux NTS and a Nix check that validates, builds, and loads the
+  packaged extension with PIE.
+
+### Fixed
+
+- Prevent ordinary source and release-archive builds from invoking implicit Flex or Bison regeneration based on file
+  timestamps.

@@ -1,6 +1,6 @@
 # Extension work handoff
 
-Snapshot date: 2026-08-27
+Snapshot date: 2026-08-28
 
 This document records the implemented baseline in `php-yumemi`, the corresponding local work in `yumemi.php`, and the
 next cross-repository slice. It assumes the current operator-handler changes are included; it is not a description of
@@ -23,6 +23,7 @@ The repository now contains:
 
 - a Nix flake with PHP 8.2 through 8.5 packages, checks, development shells, and treefmt-nix formatting;
 - GitHub Actions for the PHP and Nix checks;
+- a PIE package manifest for the verified PHP and platform envelope, with a clean-source build/load check;
 - the ordinary `phpize && ./configure && make && make test` build path;
 - an internal abstract `jbboehr\Yumemi\InternalQuantity` base class;
 - custom object creation, cloning, and arithmetic handlers for descendants of that base;
@@ -33,10 +34,10 @@ The repository now contains:
 - PHPT coverage for registration, operator dispatch, compound assignment, object lifecycle, failures, native token
   parity, and native parser behavior.
 
-The local checkout at `tmp/yumemi.php` contains the separate method-only library seam: an empty PHP fallback
-`InternalQuantity`, `Quantity extends InternalQuantity`, the canonical `rdiv()` method, PHPStan method inference, and
-consumer/runtime integration coverage. Those library changes remain a separate repository concern and must be committed
-from the yumemi.php checkout, not from this repository.
+The local checkout at `tmp/yumemi.php` has the extension integration on branch `native-lexer-parser`. Local commits
+`a6911e6` and `94dc34d` add the method/operator seam, compatible native-parser selection and translation, the PHP
+fallback, an environment opt-out, differential integration coverage, and parser benchmarks. Those commits remain a
+separate repository concern; do not commit yumemi.php files from this repository.
 
 ## Boundary to preserve
 
@@ -129,7 +130,7 @@ make -j4 CFLAGS='-g -O2 -Wall -Wextra -Werror -Wno-unused-parameter'
 NO_INTERACTION=1 REPORT_EXIT_STATUS=1 make test
 ```
 
-The supported Nix matrix and formatting gate is:
+The supported Nix matrix, formatting, generated-source, and PIE packaging gate is:
 
 ```console
 nix flake check --keep-going -L
@@ -139,8 +140,9 @@ Maintainers can regenerate or verify both committed Flex/Bison outputs after con
 `make generate-sources` or `make check-generated-sources`. The ordinary build never regenerates them implicitly.
 
 The complete eleven-test PHPT suite passes on PHP 8.2, 8.3, 8.4, and 8.5 NTS builds on x86_64 Linux. The parser also
-extends the generated-source check to Bison output. When new files are still untracked, the default Git-backed flake
-source omits them; stage them first or verify from a clean source snapshot containing the complete intended change.
+extends the generated-source check to Bison output. The PIE check validates the Composer manifest, performs a clean
+PHP 8.2 PIE build without Flex or Bison, and loads the resulting module. When new files are still untracked, the default
+Git-backed flake source omits them; stage them first or verify with a `path:` flake source containing the intended tree.
 
 ## Implemented native syntax parser
 
@@ -159,27 +161,34 @@ now consumes the same reentrant scanner and returns a nested neutral AST through
 The grammar performs no registry or unit lookup. A deterministic differential corpus of 520 valid expressions and ten
 invalid expressions matched the current yumemi.php parser's ASTs and error spans during implementation.
 
-## Next slice: yumemi.php native-parser selection
+## Implemented yumemi.php native-parser selection
 
-The next cross-repository slice belongs in yumemi.php:
+The local yumemi.php branch now adapts the neutral native arrays into its existing AST classes. It selects the native
+path only when the class is already loaded, `ABI_VERSION === 1`, `isCompatible()` is true, and
+`YUMEMI_NATIVE_PARSER` is not `0`. It translates structured native syntax and limit failures into the existing public
+exception contract and rejects malformed neutral ASTs. Missing, disabled, incompatible, or future-ABI extensions use
+the generated PHP parser unchanged.
 
-1. Add a small adapter that turns the neutral native arrays into the existing PHP AST classes.
-2. Select the native path only when `NativeParser` exists, `ABI_VERSION === 1`, and `isCompatible()` is true.
-3. Translate `NativeParseException` and `NativeLimitException` into yumemi.php's existing public parser exception and
-   source formatter contracts.
-4. Retain the generated PHP lexer/parser as the fallback for missing, incompatible, or future-ABI extensions.
-5. Run the complete parser, formatter round-trip, syntax-error, conformance, and consumer corpora against both paths.
+Focused adapter and real-extension suites cover selection without autoloading, ABI and Unicode gates, cache isolation,
+input limits before native dispatch, AST translation, exact lexemes, error metadata, previous-exception chaining, and
+fallback behavior. A deterministic 30,000-input differential probe found no mismatches. On one local PHP 8.2 NTS
+system, the benchmark measured roughly 9.2--11 times faster syntax-only parsing and 2.4--3.8 times faster fresh
+parse-and-resolve work; treat these as development measurements rather than release guarantees.
 
-The yumemi.php fallback parser and its bounded LRU cache remain authoritative until the native path passes the complete
-parser and conformance corpora.
+The PHP fallback remains authoritative and independently supported. Native parser selection is an optimization, not a
+new semantic dependency.
 
 ## Later slices
 
-After end-to-end runtime behavior is stable:
+The next slice is portability and release qualification:
 
-- finish the separate yumemi.php PHPStan operator work;
-- settle Composer `suggest` metadata and the version relationship between yumemi.php and ext-yumemi; and
-- add `package.xml`, release metadata, installation documentation, and additional platform jobs as support is proven.
+- verify or deliberately reject ZTS, debug, sanitizer, macOS, and additional architecture builds;
+- register the tagged PIE package with Packagist once the supported envelope is settled;
+- coordinate release notes between the extension and yumemi.php; and
+- decide whether the experimental native parser ABI needs a longer-lived compatibility policy before a stable release.
+
+The extension targets PIE, so PECL `package.xml` work is not planned unless a separate PECL publication requirement is
+introduced.
 
 ## Open release questions
 
@@ -193,5 +202,4 @@ Do not answer these accidentally inside an unrelated implementation patch:
 - How does PHPStan discover that operator syntax is available in a particular application environment?
 - Which OS, ZTS, sanitizer, and debug-build combinations are release requirements?
 - Does the extension need a public C header/API, or can native declarations remain private?
-- What version relationship must hold between `jbboehr/yumemi` and `ext-yumemi`?
 - Which repository owns coordinated release notes and installation documentation?

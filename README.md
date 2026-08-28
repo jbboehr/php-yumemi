@@ -11,8 +11,8 @@ names or constructs semantic unit expressions.
 
 ## Status
 
-This is an early experiment, not a supported release. The initial build targets PHP 8.2 through 8.5 on non-thread-safe
-builds. Packaging, Windows support, and ZTS support remain unfinished or unverified.
+This is an early experiment, not a supported release. The initial build and PIE package target PHP 8.2 through 8.5 on
+Linux non-thread-safe builds. Windows, ZTS, and other Unix-like platforms remain unsupported or unverified.
 
 ## Operators
 
@@ -28,7 +28,25 @@ operand order unavailable. Scalar-left division delegates `2 / $quantity` to `$q
 The handler forwards the selected operand unchanged. The canonical yumemi.php `Quantity::rdiv(int|Rational)` signature
 owns numerator validation, just as the other userland arithmetic methods own their operand rules.
 
-## Build
+## Install with PIE
+
+The repository contains a [PIE](https://github.com/php/pie) package manifest. From a checkout, use PIE to build and
+install the extension for the selected PHP installation:
+
+```console
+pie install
+```
+
+After a tagged release is registered with Packagist, the corresponding package command will be:
+
+```console
+pie install jbboehr/php-yumemi
+```
+
+The current manifest deliberately admits only the verified Linux NTS platform and PHP 8.2 through 8.5. It does not
+claim Windows or ZTS support. This project targets PIE rather than PECL, so it does not carry a `package.xml` manifest.
+
+## Build from source
 
 A PHP development package, a C compiler, Autoconf, and Make are required.
 
@@ -70,6 +88,17 @@ Synthesized nodes have null spans. Syntax failures throw the internal `NativePar
 types without parsing Bison's diagnostic prose. Callers must check `isCompatible()` before selecting this experimental
 path; the current parser ABI is exposed as `NativeParser::ABI_VERSION`.
 
+## Version compatibility
+
+yumemi.php treats the extension as optional. The method-based quantity API and generated PHP parser work without it.
+The library selects the native parser only when the extension exposes the expected parser ABI and reports compatible
+Unicode data; otherwise it falls back to PHP. `YUMEMI_NATIVE_PARSER=0` disables native parsing without unloading the
+extension.
+
+This ABI gate, rather than an exact matching package version, defines the current parser compatibility boundary.
+Applications should nevertheless upgrade yumemi.php and `ext-yumemi` together while both packages remain experimental.
+The extension package version does not replace yumemi.php's own Composer version requirement.
+
 ### Nix
 
 The flake provides packages, checks, and development shells for PHP 8.2 through 8.5. PHP 8.2 is the default:
@@ -89,6 +118,7 @@ PHPT suite against every supported PHP version and verify Nix formatting with `n
 ## Layout
 
 - `config.m4` defines the `phpize` build.
+- `composer.json` defines the PIE extension package and its supported PHP/platform envelope.
 - `nix/derivation.nix` packages the extension for the flake's supported PHP versions.
 - `php_yumemi.h` contains module metadata.
 - `src/extension.c` registers the module and its `phpinfo()` output.

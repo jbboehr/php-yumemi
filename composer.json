@@ -1,0 +1,34 @@
+{
+    "name": "jbboehr/php-yumemi",
+    "description": "Native PHP extension companion for yumemi.php operators and unit-expression parsing.",
+    "type": "php-ext",
+    "license": "(AGPL-3.0-only WITH romic-exception) AND UCAR",
+    "homepage": "https://github.com/jbboehr/php-yumemi",
+    "support": {
+        "issues": "https://github.com/jbboehr/php-yumemi/issues",
+        "source": "https://github.com/jbboehr/php-yumemi"
+    },
+    "authors": [
+        {
+            "name": "John Boehr",
+            "email": "jbboehr@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2 <8.6"
+    },
+    "php-ext": {
+        "extension-name": "yumemi",
+        "support-zts": false,
+        "support-nts": true,
+        "os-families": [
+            "linux"
+        ],
+        "configure-options": [
+            {
+                "name": "enable-yumemi",
+                "description": "Enable the yumemi extension"
+            }
+        ]
+    }
+}
