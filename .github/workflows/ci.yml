@@ -105,6 +105,9 @@ jobs:
       - name: Build and test the Windows extension
         uses: php/php-windows-builder/extension@v1
         with:
+          # The builder embeds this value in Windows filenames, so branch refs
+          # containing "/" are not safe here.
+          extension-ref: "${{ github.sha }}"
           php-version: "${{ matrix.php-version }}"
           arch: x64
           ts: "${{ matrix.ts }}"
