@@ -80,8 +80,12 @@ PHP may swap any `ZEND_MUL` operands before invoking object handlers. Consequent
 `2 * $quantity` can be indistinguishable at the handler boundary. The same applies to two quantities when, for example,
 one operand is a temporary and the other is a variable. Treating scalar multiplication as commutative gives consistent
 behavior for literals and variables while still selecting the quantity's unit and registry context, but the extension
-cannot universally recover the source-level left receiver for quantity-by-quantity multiplication. End-to-end testing
-must determine whether this affects yumemi.php's observable symbolic-unit contract before release.
+cannot universally recover the source-level left receiver for quantity-by-quantity multiplication. The yumemi.php
+integration matrix now compares method calls with this real handler across PHP 8.2 through 8.5, including reversed
+operands, helper-return and expression temporaries, compound assignment, symbolic-factor ordering, and cross-context
+failures. Admitted products are canonical and retain the shared context; rejected products expose the same exception
+class, message, and canonically ordered process-local context IDs. Equivalent commutative behavior is therefore the
+contract, and source-level receiver recovery is not required in this extension.
 
 The handler also preserves:
 
@@ -203,8 +207,6 @@ Do not answer these accidentally inside an unrelated implementation patch:
 
 - Is `InternalQuantity` the final published class name and compatibility classification?
 - Should a future version declare abstract arithmetic signatures on the internal base?
-- Must quantity-by-quantity multiplication preserve the source-level left receiver even when Zend has reordered the
-  operands, or is an equivalent commutative result sufficient?
 - Should scalar-left `+` or `-` ever gain semantics? They are currently deliberately unsupported.
 - How does PHPStan discover that operator syntax is available in a particular application environment?
 - Which of the qualified macOS and Windows combinations are release requirements, and which are best-effort CI?
