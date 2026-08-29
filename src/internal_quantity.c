@@ -37,6 +37,53 @@ static zend_object *yumemi_internal_quantity_clone_object(zend_object *old_objec
     return new_object;
 }
 
+static int yumemi_internal_quantity_compare(zval *left, zval *right)
+{
+    zend_function *method;
+    zval return_value;
+    zval *comparison_value;
+    zend_long comparison;
+
+    ZEND_COMPARE_OBJECTS_FALLBACK(left, right);
+
+    if (Z_OBJ_P(left) == Z_OBJ_P(right)) {
+        return 0;
+    }
+
+    method = zend_hash_str_find_ptr_lc(&Z_OBJCE_P(left)->function_table, "compareto", sizeof("compareto") - 1);
+
+    if (method == NULL || !(method->common.fn_flags & ZEND_ACC_PUBLIC) || method->common.fn_flags & ZEND_ACC_STATIC) {
+        zend_throw_error(NULL, "Call to undefined method %s::compareTo()", ZSTR_VAL(Z_OBJCE_P(left)->name));
+        return ZEND_UNCOMPARABLE;
+    }
+
+    ZVAL_UNDEF(&return_value);
+    zend_call_known_instance_method_with_1_params(method, Z_OBJ_P(left), &return_value, right);
+
+    if (UNEXPECTED(EG(exception))) {
+        if (!Z_ISUNDEF(return_value)) {
+            zval_ptr_dtor(&return_value);
+        }
+        return ZEND_UNCOMPARABLE;
+    }
+
+    comparison_value = &return_value;
+    ZVAL_DEREF(comparison_value);
+
+    if (UNEXPECTED(Z_TYPE_P(comparison_value) != IS_LONG)) {
+        zend_type_error("%s::compareTo() must return int, %s returned",
+                        ZSTR_VAL(Z_OBJCE_P(left)->name),
+                        zend_zval_type_name(&return_value));
+        zval_ptr_dtor(&return_value);
+        return ZEND_UNCOMPARABLE;
+    }
+
+    comparison = Z_LVAL_P(comparison_value);
+    zval_ptr_dtor(&return_value);
+
+    return (comparison > 0) - (comparison < 0);
+}
+
 static zend_result yumemi_internal_quantity_do_operation(zend_uchar opcode, zval *result, zval *left, zval *right)
 {
     const char *method_name;
@@ -126,6 +173,7 @@ zend_result yumemi_register_internal_quantity(void)
     memcpy(&yumemi_internal_quantity_handlers, &std_object_handlers, sizeof(zend_object_handlers));
     yumemi_internal_quantity_handlers.clone_obj = yumemi_internal_quantity_clone_object;
     yumemi_internal_quantity_handlers.do_operation = yumemi_internal_quantity_do_operation;
+    yumemi_internal_quantity_handlers.compare = yumemi_internal_quantity_compare;
 
     INIT_NS_CLASS_ENTRY(class_entry, "jbboehr\\Yumemi", "InternalQuantity", NULL);
     yumemi_internal_quantity_class_entry = zend_register_internal_class(&class_entry);

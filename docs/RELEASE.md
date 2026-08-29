@@ -26,7 +26,7 @@ The following are cross-package implementation seams, not application APIs:
 Applications should use `Quantity` and the public parser behavior exposed by yumemi.php. The two repositories may
 revise an internal seam only through a coordinated change that preserves yumemi.php's method API, fallback parser, and
 compatibility gate. No public C header or stable C ABI is promised. The internal base deliberately declares no abstract
-arithmetic methods; public userland methods remain the semantic contract.
+operator methods; public userland methods remain the semantic contract.
 
 ## Platform envelope
 
@@ -50,7 +50,7 @@ reclassified as product success.
 dependency:
 
 - yumemi.php must continue to install and pass its primary tests without `ext-yumemi`;
-- the extension must not duplicate unit, conversion, registry, or arithmetic semantics;
+- the extension must not duplicate unit, conversion, registry, arithmetic, or comparison semantics;
 - yumemi.php selects native parsing only when the advertised parser ABI and Unicode compatibility gate match;
 - applications should upgrade both packages together while the extension seams remain provisional; and
 - a release note that changes an operator or parser seam must name the compatible release or commit in the other

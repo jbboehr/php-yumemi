@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add the loadable `yumemi` extension and the abstract `jbboehr\Yumemi\InternalQuantity` seam used by yumemi.php.
 - Delegate `+`, `-`, `*`, `/`, and `**` to userland quantity methods, including scalar multiplication from either side
   and scalar-left division through `rdiv()`.
+- Delegate non-strict object comparison and natural-order consumers to `compareTo()`, while preserving strict identity
+  and standard behavior for values outside the quantity handler boundary.
 - Add a reentrant native lexer for Yumemi unit expressions with version-gated Unicode parity, byte spans, and resource
   limits.
 - Add a pure reentrant native parser with an arena-backed neutral AST, structured syntax failures, byte spans, and an

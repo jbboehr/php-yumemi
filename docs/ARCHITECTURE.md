@@ -21,7 +21,7 @@ flowchart LR
 
 yumemi.php remains authoritative for:
 
-- exact arithmetic and conversion;
+- exact arithmetic, comparison, and conversion;
 - unit and registry-context rules;
 - AST interpretation, normalization, and simplification;
 - operand validation and exception types; and
@@ -86,6 +86,24 @@ universally reconstruct the source-level left receiver, so yumemi.php defines mu
 identity. Its integration matrix compares operator syntax with method calls across reversed operands, variables,
 temporary expressions, compound assignment, symbolic-factor order, and registry contexts. Accepted products are
 canonical and retain the shared context; rejected cross-context products expose the same exception from either order.
+
+### Natural comparison contract
+
+The object `compare` handler defines a single three-way relation by calling `compareTo()` when both operands use the
+`InternalQuantity` handler table. The returned integer is normalized to `-1`, `0`, or `1`. Missing, non-public, static,
+throwing, or non-integer methods produce controlled PHP throwables; the extension does not fall back to comparing
+object properties after semantic delegation fails.
+
+Zend uses the same callback for `==`, `!=`, `<`, `<=`, `>`, `>=`, and `<=>`, as well as implicit consumers such as
+`sort()`, `asort()`, and `rsort()` with `SORT_REGULAR`. Comparison is consequently a partial natural order: exceptions
+from `compareTo()` for incompatible dimensions or registry contexts also abort implicit consumers. Strict identity
+operators `===` and `!==` bypass the handler and retain PHP object identity. Object-versus-`null`, scalar, unrelated
+object, and different-handler comparisons use Zend's standard behavior.
+
+PHP compiles `>` and `>=` as `<` and `<=` with swapped operands. The callback therefore cannot guarantee that the
+source-left object is the method receiver for those forms. This is correct for the antisymmetric relation promised by
+`compareTo()`, but exception metadata follows the receiver order supplied by Zend. The callback also cannot identify
+whether a request originated in explicit syntax or an implicit engine consumer.
 
 ## Native syntax path
 

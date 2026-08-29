@@ -5,12 +5,13 @@ Experimental native PHP extension companion to
 
 The extension adds two optional capabilities to the pure-PHP library:
 
-- `Quantity` objects can use PHP arithmetic operators, which delegate to the existing public method API; and
+- `Quantity` objects can use PHP arithmetic and non-strict comparison operators, which delegate to the existing public
+  method API; and
 - compatible yumemi.php versions can parse unit expressions with the native lexer and parser, falling back to the PHP
   parser automatically when the native path is unavailable.
 
-Arithmetic, conversion, registry handling, and result construction remain in yumemi.php. Installing this extension does
-not create a second unit engine or make the extension a dependency of portable library code.
+Arithmetic, comparison, conversion, registry handling, and result construction remain in yumemi.php. Installing this
+extension does not create a second unit engine or make the extension a dependency of portable library code.
 
 The integration has not yet shipped in a tagged yumemi.php release. Until it does, the installation below uses the
 `develop` branch, which contains both the operator seam and native-parser adapter.
@@ -98,8 +99,8 @@ echo $total->exactDecimalValueIn('meter'), ' ', $total->unitToString(), PHP_EOL;
 // 1.5 meter
 ```
 
-Reusable libraries should continue to prefer `add()`, `sub()`, `mul()`, `div()`, `pow()`, and `rdiv()`, because those
-methods work whether or not an application installs the extension.
+Reusable libraries should continue to prefer `add()`, `sub()`, `mul()`, `div()`, `pow()`, `rdiv()`, and `compareTo()`,
+because those methods work whether or not an application installs the extension.
 
 ### Enable PHPStan's operator model
 
@@ -117,6 +118,10 @@ Enabling that file is the application's declaration that analyzed operator-beari
 See yumemi.php's [Optional Quantity Operators][yumemi-operator-docs] documentation for the operand and result-type
 contract.
 
+The current yumemi.php PHPStan integration still diagnoses object-comparison syntax, even when the arithmetic operator
+model is enabled. Runtime comparison support in this development branch therefore does not yet have a corresponding
+PHPStan opt-in; use `compareTo()` in statically analyzed code until the two packages coordinate that model.
+
 ## Operators
 
 For descendants of `jbboehr\Yumemi\InternalQuantity`, the extension delegates:
@@ -129,14 +134,28 @@ For descendants of `jbboehr\Yumemi\InternalQuantity`, the extension delegates:
 | `$quantity / $other` | `$quantity->div($other)` |
 | `$quantity ** $power` | `$quantity->pow($power)` |
 | `$numerator / $quantity` | `$quantity->rdiv($numerator)` |
+| `$left == $right`, `$left != $right` | zero/nonzero of the `compareTo()` relation |
+| `$left < $right`, `$left <= $right` | negative/nonpositive `compareTo()` relation |
+| `$left > $right`, `$left >= $right` | positive/nonnegative relation, executed with swapped operands by Zend |
+| `$left <=> $right` | normalized sign of `$left->compareTo($right)` |
 
-The selected method receives the other operand unchanged, owns its validation, and supplies the result or exception.
-Scalar multiplication works from either side. Scalar-left `+`, `-`, and `**` remain unsupported.
+Each delegated arithmetic method receives the other operand unchanged, owns its validation, and supplies the result or
+exception. Scalar multiplication works from either side. Scalar-left `+`, `-`, and `**` remain unsupported.
 
 PHP may reorder multiplication operands before invoking an internal object handler. Scalar multiplication is therefore
 treated as commutative at the handler boundary. yumemi.php also defines quantity-by-quantity products independently of
 which operand Zend presents as the receiver: accepted products are canonical and retain the shared registry context,
 while rejected cross-context products expose the same failure from either order.
+
+Non-strict comparisons define one natural-order relation from `compareTo()`. The extension normalizes its integer to
+`-1`, `0`, or `1`; `==`, `!=`, `<`, `<=`, `>`, `>=`, and `<=>` all consume that relation. PHP compiles `>` and `>=` as
+swapped `<` and `<=` operations, so those forms may invoke `compareTo()` on the source-right object. `===` and `!==`
+remain PHP object-identity checks and are never delegated.
+
+Zend exposes this callback to implicit comparison consumers too. Functions such as `sort()`, `asort()`, and `rsort()`
+with `SORT_REGULAR` therefore use the same quantity ordering. If `compareTo()` rejects incompatible dimensions or
+registry contexts, the exception propagates from both explicit syntax and those consumers. Scalars, `null`, unrelated
+objects, and objects with a different comparison handler retain standard PHP behavior.
 
 ## Native parser selection
 

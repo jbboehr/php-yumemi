@@ -10,9 +10,10 @@ This is a coordination note for work that spans php-yumemi and
 ## Repository state
 
 - php-yumemi behavior baseline:
-  [`c326537`](https://github.com/jbboehr/php-yumemi/commit/c326537e7939bef490b4834cc0b733d6af8e189c)
-- yumemi.php `develop` baseline, including native parsing, operator hardening, and receiver-independent multiplication:
-  [`a5afea2`](https://github.com/jbboehr/yumemi.php/commit/a5afea2a9e50f199683c75fca16805708ac8b65e)
+  [`398ca8a`](https://github.com/jbboehr/php-yumemi/commit/398ca8a6c64a12b7248d2939813d00ee6a922c90)
+- yumemi.php `develop` baseline, including native parsing, operator hardening, receiver-independent multiplication, and
+  conservative PHPStan comparison diagnostics:
+  [`26899ec`](https://github.com/jbboehr/yumemi.php/commit/26899ec05f359ba38b4dcfec4eca0e2d0461f41f)
 
 An ignored checkout may exist at `tmp/yumemi.php` as a local convenience. It is a separate Git repository: never add
 its files to php-yumemi, and use the remote branch and commit links above when handing work to someone who does not have
@@ -21,9 +22,9 @@ that checkout.
 ## Boundary to preserve
 
 php-yumemi is an optional syntax adapter, not a second unit engine. It supplies Zend operator handlers and a neutral
-unit-expression parser result. yumemi.php remains responsible for arithmetic semantics, registry-context safety,
-operand validation, AST interpretation, exceptions, and result construction. The public method API and generated PHP
-parser must continue to work when the extension is absent or disabled.
+unit-expression parser result. yumemi.php remains responsible for arithmetic and comparison semantics,
+registry-context safety, operand validation, AST interpretation, exceptions, and result construction. The public
+method API and generated PHP parser must continue to work when the extension is absent or disabled.
 
 The detailed operator and parser contracts are in [Architecture](ARCHITECTURE.md) and
 [Native Parser ABI](NATIVE_PARSER_ABI.md). Changes that cross this boundary should have matching coverage in both
@@ -39,6 +40,18 @@ compound assignment, symbolic-factor ordering, and registry contexts.
 Accepted products are canonical and retain the shared context. Rejected cross-context products expose the same
 exception class, message, and canonically ordered process-local context IDs from either operand order. Source-level
 receiver recovery is therefore not required in php-yumemi.
+
+## Native comparison coordination
+
+php-yumemi's current development tree delegates the `InternalQuantity` natural comparison relation to `compareTo()`.
+This affects all non-strict comparison operators plus implicit Zend consumers such as `sort(..., SORT_REGULAR)`.
+Strict identity remains unchanged, and incompatible quantity comparisons propagate the method exception.
+
+The yumemi.php baseline above intentionally rejects quantity object-comparison syntax in PHPStan, including when its
+arithmetic operator model is enabled. Before advertising comparison syntax as a coordinated integration feature,
+yumemi.php must deliberately opt supported `Quantity` comparisons into `yumemi-operators.neon` while continuing to
+reject strict identity as semantic equality, `PointQuantity`, and unsupported operand shapes. No yumemi.php files were
+changed as part of the extension-only slice.
 
 ## Verification snapshot
 

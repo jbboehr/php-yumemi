@@ -98,6 +98,10 @@ its extension ref because it embeds that value in filenames and branch refs cont
 | `010-native-parser-failures.phpt` | Structured syntax failures and inherited lexer limits |
 | `011-native-error-metadata.phpt` | Machine-readable syntax and resource metadata |
 | `012-build-qualification.phpt` | Requested ZTS/debug modes in qualification builds |
+| `013-comparison-delegation.phpt` | Natural comparison, identity, temporaries, references, nulls, and sorting |
+| `014-comparison-failures.phpt` | Missing or invalid methods, exceptions, and standard comparison fallbacks |
+| `015-comparison-reference-return.phpt` | Integer results returned by reference |
+| `016-comparison-lifecycle.phpt` | Return-value cleanup, temporary operands, and recovery after exceptions |
 
 The build-mode test skips in ordinary NTS runs and passes when the qualification derivation requests its mode.
 
