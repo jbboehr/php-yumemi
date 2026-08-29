@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add a PIE package manifest for PHP 8.2 through 8.5 on Linux NTS and ZTS and a Nix check that validates, builds, and
   loads the packaged extension with PIE.
 - Qualify PHP 8.2 and 8.5 ZTS/debug builds and a PHP 8.5 Clang ASan/UBSan build on x86_64 Linux.
+- Qualify source builds on Intel and Apple Silicon macOS and on x64 Windows NTS and TS builds, with the native platform
+  matrices running on direct `develop` pushes and their platform-prefixed qualification branches.
 
 ### Fixed
 

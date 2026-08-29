@@ -51,7 +51,11 @@ jobs:
         run: find tests -name '*.log' -exec cat {} \;
 
   macos:
-    if: ${{ startsWith(github.head_ref || github.ref_name, 'darwin/') }}
+    if: >-
+      ${{
+        (github.event_name == 'push' && github.ref_name == 'develop') ||
+        startsWith(github.head_ref || github.ref_name, 'darwin/')
+      }}
     name: "macOS | PHP ${{ matrix.php-version }} ${{ matrix.arch }}"
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -85,7 +89,11 @@ jobs:
         run: php -n -d extension="$(pwd)/modules/yumemi.so" --ri yumemi
 
   windows:
-    if: ${{ startsWith(github.head_ref || github.ref_name, 'windows/') }}
+    if: >-
+      ${{
+        (github.event_name == 'push' && github.ref_name == 'develop') ||
+        startsWith(github.head_ref || github.ref_name, 'windows/')
+      }}
     runs-on: windows-2022
     name: "Windows | PHP ${{ matrix.php-version }} ${{ matrix.ts }} x64"
     strategy:

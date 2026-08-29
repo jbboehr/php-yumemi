@@ -11,9 +11,14 @@ names or constructs semantic unit expressions.
 
 ## Status
 
-This is an early experiment, not a supported release. The initial build and PIE package target PHP 8.2 through 8.5 on
-Linux NTS and ZTS builds. ZTS is qualified with debug-enabled PHP 8.2 and 8.5 builds on x86_64 Linux. Windows and other
-Unix-like platforms remain unsupported or unverified.
+This is an early experiment, not a supported release. Source-build CI currently qualifies:
+
+- PHP 8.2 through 8.5 NTS on x86_64 Linux, plus debug-enabled ZTS builds at the PHP 8.2 and 8.5 endpoints;
+- PHP 8.2 on Intel macOS and PHP 8.5 on Apple Silicon macOS; and
+- PHP 8.2, 8.4, and 8.5 NTS plus PHP 8.4 TS on x64 Windows.
+
+The PIE package envelope remains intentionally narrower: PHP 8.2 through 8.5 on Linux NTS and ZTS builds. The macOS
+and Windows results qualify source builds but do not yet claim PIE installation support on those platforms.
 
 ## Operators
 
@@ -120,7 +125,8 @@ direnv installed, the checked-in `.envrc` enters the default shell automatically
 
 ## Layout
 
-- `config.m4` defines the `phpize` build.
+- `config.m4` defines the Unix-like `phpize` build.
+- `config.w32` defines the Windows extension build.
 - `composer.json` defines the PIE extension package and its supported PHP/platform envelope.
 - `nix/derivation.nix` packages the extension for the flake's supported PHP versions.
 - `php_yumemi.h` contains module metadata.

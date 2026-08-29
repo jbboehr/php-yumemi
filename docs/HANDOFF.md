@@ -1,6 +1,6 @@
 # Extension work handoff
 
-Snapshot date: 2026-08-28
+Snapshot date: 2026-08-29
 
 This document records the implemented baseline in `php-yumemi`, the corresponding local work in `yumemi.php`, and the
 next cross-repository slice. It assumes the current operator-handler changes are included; it is not a description of
@@ -12,18 +12,18 @@ the earlier load-only scaffold.
 | --- | --- |
 | Repository | `jbboehr/php-yumemi` |
 | Extension/module name | `yumemi` |
-| Shared library | `yumemi.so` |
+| Shared library | `yumemi.so` on Unix-like platforms; `php_yumemi.dll` on Windows |
 | Composer platform package | `ext-yumemi` |
 | Development version | `0.1.0-dev` |
 | Target PHP versions | 8.2 through 8.5 |
-| Verified platform | x86_64 Linux, NTS plus PHP 8.2/8.5 ZTS and debug builds |
-| License | `AGPL-3.0-only WITH romic-exception` |
+| Verified platforms | x86_64 Linux, x64 and arm64 macOS, and x64 Windows |
+| License | `(AGPL-3.0-only WITH romic-exception) AND UCAR` |
 
 The repository now contains:
 
 - a Nix flake with PHP 8.2 through 8.5 packages, checks, development shells, and treefmt-nix formatting;
-- GitHub Actions for the PHP and Nix checks;
-- a PIE package manifest for the verified PHP and platform envelope, with a clean-source build/load check;
+- GitHub Actions for the Linux PHP and Nix checks plus native macOS and Windows source-build matrices;
+- a Linux-only PIE package manifest for PHP 8.2 through 8.5 NTS and ZTS, with a clean-source build/load check;
 - the ordinary `phpize && ./configure && make && make test` build path;
 - an internal abstract `jbboehr\Yumemi\InternalQuantity` base class;
 - custom object creation, cloning, and arithmetic handlers for descendants of that base;
@@ -143,10 +143,13 @@ Maintainers can regenerate or verify both committed Flex/Bison outputs after con
 The twelve-test PHPT collection runs on PHP 8.2, 8.3, 8.4, and 8.5 NTS builds on x86_64 Linux: all eleven behavior tests
 pass and the build-mode-only test skips. All twelve pass on debug-enabled ZTS builds at the PHP 8.2 and 8.5 endpoints.
 A PHP 8.5 Clang ASan/UBSan build also passes all eleven behavior tests with Zend's allocator disabled. The real
-yumemi.php extension integration suite passes under both qualified ZTS/debug endpoints. The parser extends the
-generated-source check to Bison output. The PIE check validates the Composer manifest, performs a clean PHP 8.2 PIE
-build without Flex or Bison, and loads the resulting module. When new files are still untracked, the default Git-backed
-flake source omits them; stage them first or verify with a `path:` flake source containing the intended tree.
+yumemi.php extension integration suite passes under both qualified ZTS/debug endpoints. Native source-build CI also
+passes on Intel macOS with PHP 8.2, Apple Silicon macOS with PHP 8.5, and x64 Windows with PHP 8.2, 8.4, and 8.5 NTS
+plus PHP 8.4 TS. Those native matrices run on direct `develop` pushes and on `darwin/**` or `windows/**` qualification
+branches; the platform-prefixed branches skip the unrelated jobs. The parser extends the generated-source check to
+Bison output. The PIE check validates the Linux-only Composer manifest, performs a clean PHP 8.2 PIE build without Flex
+or Bison, and loads the resulting module. When new files are still untracked, the default Git-backed flake source omits
+them; stage them first or verify with a `path:` flake source containing the intended tree.
 
 ## Implemented native syntax parser
 
@@ -184,9 +187,9 @@ new semantic dependency.
 
 ## Later slices
 
-The next slice is portability and release qualification:
+The next slice is release-policy qualification:
 
-- verify macOS and additional architecture builds;
+- decide whether to expand the Linux-only PIE envelope using the separate macOS and Windows source-build evidence;
 - register the tagged PIE package with Packagist once the supported envelope is settled;
 - coordinate release notes between the extension and yumemi.php; and
 - decide whether the experimental native parser ABI needs a longer-lived compatibility policy before a stable release.
@@ -204,6 +207,6 @@ Do not answer these accidentally inside an unrelated implementation patch:
   operands, or is an equivalent commutative result sufficient?
 - Should scalar-left `+` or `-` ever gain semantics? They are currently deliberately unsupported.
 - How does PHPStan discover that operator syntax is available in a particular application environment?
-- Which macOS and additional architecture combinations are release requirements?
+- Which of the qualified macOS and Windows combinations are release requirements, and which are best-effort CI?
 - Does the extension need a public C header/API, or can native declarations remain private?
 - Which repository owns coordinated release notes and installation documentation?
