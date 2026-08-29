@@ -65,8 +65,12 @@ foreach ($cases as $category => [$input, $expectedMessage, $metadata]) {
 try {
     $className::tokenize(str_repeat('(', 65));
 } catch (LengthException $first) {
-    $first->limit = 'mutated';
-    $first->maximum = -1;
+    try {
+        $first->limit = 'mutated';
+        echo "limit-metadata:mutable\n";
+    } catch (Error) {
+        echo "limit-metadata:readonly\n";
+    }
 }
 
 try {
@@ -103,6 +107,7 @@ input-bytes:jbboehr\Yumemi\Parser\NativeLimitException:details
 token-count:jbboehr\Yumemi\Parser\NativeLimitException:details
 nesting-depth:jbboehr\Yumemi\Parser\NativeLimitException:details
 token-bytes:jbboehr\Yumemi\Parser\NativeLimitException:details
+limit-metadata:readonly
 limit-object-isolation:isolated
 input-bytes-boundary:accepted
 token-count-boundary:accepted

@@ -22,6 +22,42 @@ var_dump($limitClassExists && (new ReflectionClass($limitExceptionClass))->isInt
 var_dump($limitClassExists && (new ReflectionClass($limitExceptionClass))->isFinal());
 var_dump($limitClassExists && is_subclass_of($limitExceptionClass, LengthException::class));
 
+$metadataContracts = [
+    'syntax' => [
+        $parseExceptionClass,
+        [
+            'input' => 'string',
+            'start' => 'int',
+            'end' => 'int',
+            'unexpected' => '?string',
+            'expected' => 'array',
+        ],
+    ],
+    'limit' => [
+        $limitExceptionClass,
+        [
+            'limit' => 'string',
+            'maximum' => 'int',
+            'observed' => 'int',
+            'start' => 'int',
+            'end' => 'int',
+        ],
+    ],
+];
+
+foreach ($metadataContracts as $label => [$class, $properties]) {
+    $reflection = new ReflectionClass($class);
+    $matches = true;
+    foreach ($properties as $name => $type) {
+        $property = $reflection->getProperty($name);
+        $matches = $matches
+            && $property->isPublic()
+            && $property->isReadOnly()
+            && (string) $property->getType() === $type;
+    }
+    echo $label, '-metadata-contract:', $matches ? 'typed-readonly' : 'wrong', PHP_EOL;
+}
+
 $syntaxFailures = [
     'initial-token' => [
         '+',
@@ -90,8 +126,19 @@ foreach ($syntaxFailures as $label => [$input, $start, $end, $unexpected, $expec
 try {
     $parserClass::parse('meter @ )');
 } catch (Throwable $first) {
-    $first->unexpected = 'mutated';
-    $first->expected[] = 'mutated';
+    try {
+        $first->unexpected = 'mutated';
+        echo "syntax-metadata:mutable\n";
+    } catch (Error) {
+        echo "syntax-metadata:readonly\n";
+    }
+
+    try {
+        $first->expected[] = 'mutated';
+        echo "syntax-expected-metadata:mutable\n";
+    } catch (Error) {
+        echo "syntax-expected-metadata:readonly\n";
+    }
 }
 
 try {
@@ -138,11 +185,15 @@ bool(true)
 bool(true)
 bool(true)
 bool(true)
+syntax-metadata-contract:typed-readonly
+limit-metadata-contract:typed-readonly
 initial-token:structured:message-compatible
 unexpected-token:structured:message-compatible
 end-of-input:structured:message-compatible
 group-end-of-input:structured:message-compatible
 invalid-token-name:structured:message-compatible
+syntax-metadata:readonly
+syntax-expected-metadata:readonly
 syntax-object-isolation:isolated
 input-bytes:structured
 token-count:structured

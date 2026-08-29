@@ -471,6 +471,24 @@ bool yumemi_lexer_is_compatible(void)
            memcmp(Z_STRVAL_P(pcre_version), YUMEMI_UNICODE_PCRE_VERSION, sizeof(YUMEMI_UNICODE_PCRE_VERSION) - 1) == 0;
 }
 
+void yumemi_declare_readonly_property(zend_class_entry *class_entry,
+                                      const char *name,
+                                      size_t name_length,
+                                      uint32_t type_mask)
+{
+    zval default_value;
+    zend_string *property_name = zend_string_init(name, name_length, true);
+
+    ZVAL_UNDEF(&default_value);
+    zend_declare_typed_property(class_entry,
+                                property_name,
+                                &default_value,
+                                ZEND_ACC_PUBLIC | ZEND_ACC_READONLY,
+                                NULL,
+                                (zend_type)ZEND_TYPE_INIT_MASK(type_mask));
+    zend_string_release(property_name);
+}
+
 void yumemi_lexer_throw_incompatible_pcre(void)
 {
     zval *pcre_version = yumemi_native_lexer_runtime_pcre_version();
@@ -573,11 +591,14 @@ zend_result yumemi_register_native_lexer(void)
     INIT_NS_CLASS_ENTRY(exception_entry, "jbboehr\\Yumemi\\Parser", "NativeLimitException", NULL);
     yumemi_native_limit_exception_class = zend_register_internal_class_ex(&exception_entry, spl_ce_LengthException);
     yumemi_native_limit_exception_class->ce_flags |= ZEND_ACC_FINAL;
-    zend_declare_property_null(yumemi_native_limit_exception_class, ZEND_STRL("limit"), ZEND_ACC_PUBLIC);
-    zend_declare_property_null(yumemi_native_limit_exception_class, ZEND_STRL("maximum"), ZEND_ACC_PUBLIC);
-    zend_declare_property_null(yumemi_native_limit_exception_class, ZEND_STRL("observed"), ZEND_ACC_PUBLIC);
-    zend_declare_property_null(yumemi_native_limit_exception_class, ZEND_STRL("start"), ZEND_ACC_PUBLIC);
-    zend_declare_property_null(yumemi_native_limit_exception_class, ZEND_STRL("end"), ZEND_ACC_PUBLIC);
+    yumemi_declare_readonly_property(
+        yumemi_native_limit_exception_class, ZEND_STRL("limit"), MAY_BE_STRING);
+    yumemi_declare_readonly_property(
+        yumemi_native_limit_exception_class, ZEND_STRL("maximum"), MAY_BE_LONG);
+    yumemi_declare_readonly_property(
+        yumemi_native_limit_exception_class, ZEND_STRL("observed"), MAY_BE_LONG);
+    yumemi_declare_readonly_property(yumemi_native_limit_exception_class, ZEND_STRL("start"), MAY_BE_LONG);
+    yumemi_declare_readonly_property(yumemi_native_limit_exception_class, ZEND_STRL("end"), MAY_BE_LONG);
 
     INIT_NS_CLASS_ENTRY(lexer_entry, "jbboehr\\Yumemi\\Parser", "NativeLexer", yumemi_native_lexer_methods);
     native_lexer_class_entry = zend_register_internal_class(&lexer_entry);

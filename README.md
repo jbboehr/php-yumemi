@@ -145,9 +145,11 @@ The currently compatible yumemi.php `develop` branch selects the native parser a
 extension's Unicode tables match PHP's runtime PCRE data; otherwise it uses its generated PHP parser. This adapter has
 not yet shipped in a tagged yumemi.php release.
 
-Set `YUMEMI_NATIVE_PARSER=0` in the process environment to force the PHP parser without unloading the extension. The
-fallback parser remains authoritative and independently supported. Applications should upgrade yumemi.php and
-`ext-yumemi` together while the integration remains experimental.
+Set `YUMEMI_NATIVE_PARSER` to `0`, `false`, `off`, `no`, or an empty string in the process environment to force the PHP
+parser without unloading the extension. Leave it unset, or set it to `1`, `true`, `on`, or `yes`, for automatic native
+selection; values are case-insensitive, and any other explicit value fails closed to the PHP fallback. The fallback
+parser remains authoritative and independently supported. Applications should upgrade yumemi.php and `ext-yumemi`
+together while the integration remains experimental.
 
 The array schema, structured failure metadata, Unicode gate, and ABI contract are documented in
 [Native Parser ABI](docs/NATIVE_PARSER_ABI.md).

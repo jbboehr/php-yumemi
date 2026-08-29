@@ -357,6 +357,12 @@ static void yumemi_native_parser_throw_syntax_error(zend_string *input,
                                     exception,
                                     ZEND_STRL("unexpected"),
                                     context->unexpected_token);
+    } else {
+        zval unexpected;
+
+        ZVAL_NULL(&unexpected);
+        zend_update_property(
+            yumemi_native_parse_exception_class, exception, ZEND_STRL("unexpected"), &unexpected);
     }
 
     array_init_size(&expected, context->expected_token_count);
@@ -459,11 +465,12 @@ zend_result yumemi_register_native_parser(void)
     INIT_NS_CLASS_ENTRY(exception_entry, "jbboehr\\Yumemi\\Parser", "NativeParseException", NULL);
     yumemi_native_parse_exception_class = zend_register_internal_class_ex(&exception_entry, spl_ce_RuntimeException);
     yumemi_native_parse_exception_class->ce_flags |= ZEND_ACC_FINAL;
-    zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("input"), ZEND_ACC_PUBLIC);
-    zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("start"), ZEND_ACC_PUBLIC);
-    zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("end"), ZEND_ACC_PUBLIC);
-    zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("unexpected"), ZEND_ACC_PUBLIC);
-    zend_declare_property_null(yumemi_native_parse_exception_class, ZEND_STRL("expected"), ZEND_ACC_PUBLIC);
+    yumemi_declare_readonly_property(yumemi_native_parse_exception_class, ZEND_STRL("input"), MAY_BE_STRING);
+    yumemi_declare_readonly_property(yumemi_native_parse_exception_class, ZEND_STRL("start"), MAY_BE_LONG);
+    yumemi_declare_readonly_property(yumemi_native_parse_exception_class, ZEND_STRL("end"), MAY_BE_LONG);
+    yumemi_declare_readonly_property(
+        yumemi_native_parse_exception_class, ZEND_STRL("unexpected"), MAY_BE_STRING | MAY_BE_NULL);
+    yumemi_declare_readonly_property(yumemi_native_parse_exception_class, ZEND_STRL("expected"), MAY_BE_ARRAY);
 
     INIT_NS_CLASS_ENTRY(parser_entry, "jbboehr\\Yumemi\\Parser", "NativeParser", yumemi_native_parser_methods);
     native_parser_class = zend_register_internal_class(&parser_entry);

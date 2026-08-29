@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add the release and compatibility policy, including the supported Linux PIE envelope, best-effort native source-build
   combinations, coordinated versioning, and release-tag qualification.
 
+### Changed
+
+- Make native parser exception metadata natively typed and readonly, matching the documented integration ABI.
+
 ### Fixed
 
 - Initialize Zend's thread-local cache for each request so dynamic ZTS builds can safely use operator dispatch and the

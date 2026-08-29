@@ -96,6 +96,10 @@ size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t len
 const char *yumemi_lexer_token_name(yumemi_token_type type);
 const char *yumemi_lexer_limit_name(yumemi_lexer_limit limit);
 bool yumemi_lexer_is_compatible(void);
+void yumemi_declare_readonly_property(zend_class_entry *class_entry,
+                                      const char *name,
+                                      size_t name_length,
+                                      uint32_t type_mask);
 void yumemi_lexer_throw_incompatible_pcre(void);
 void yumemi_lexer_throw_limit(const yumemi_lexer_error *error);
 

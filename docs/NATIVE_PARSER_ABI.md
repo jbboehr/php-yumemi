@@ -11,9 +11,11 @@ The current ABI version is `1`, exposed as
 1. `NativeParser` is already loaded, without triggering autoload;
 2. `ABI_VERSION === 1`;
 3. `NativeParser::isCompatible()` returns `true`; and
-4. the process environment does not set `YUMEMI_NATIVE_PARSER=0`.
+4. the process-level `YUMEMI_NATIVE_PARSER` setting permits native parsing.
 
 Every failed check selects the generated PHP parser. Native parsing is an optimization and never a semantic dependency.
+The setting is case-insensitive: unset, `1`, `true`, `on`, and `yes` permit native selection, while `0`, `false`, `off`,
+`no`, and the empty string select the PHP fallback. Any other explicit value also fails closed to the fallback.
 
 `isCompatible()` is fail-closed. It returns `true` only when PHP's runtime `PCRE_VERSION` exactly matches the Unicode
 tables committed with the extension. This prevents the native lexer and yumemi.php's PCRE-based lexer from assigning
@@ -76,7 +78,8 @@ The yumemi.php adapter validates every field before translating the neutral arra
 
 ## Syntax failures
 
-Invalid syntax throws the internal `NativeParseException`, a final `RuntimeException` descendant with public metadata:
+Invalid syntax throws the internal `NativeParseException`, a final `RuntimeException` descendant with natively typed,
+public readonly metadata:
 
 | Property | Type at runtime | Meaning |
 | --- | --- | --- |
@@ -95,7 +98,7 @@ as `decimal number`, `end of file`, and `superscript sign without digits`, plus 
 ## Resource failures
 
 Input, token count, nesting depth, and token size are bounded before semantic resolution. A violation throws the
-internal `NativeLimitException`, a final `LengthException` descendant with:
+internal `NativeLimitException`, a final `LengthException` descendant with natively typed, public readonly metadata:
 
 | Property | Type at runtime | Meaning |
 | --- | --- | --- |
