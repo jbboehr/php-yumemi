@@ -19,6 +19,9 @@ The integration has not yet shipped in a tagged yumemi.php release. Until it doe
 
 This is an early experiment, not a supported release.
 
+The [release and compatibility policy](docs/RELEASE.md) defines the intended first-release Linux envelope, best-effort
+native source-build combinations, provisional cross-package seams, and exact release gate.
+
 | Environment | Source-build CI coverage | Distribution status |
 | --- | --- | --- |
 | x86_64 Linux | PHP 8.2–8.5 NTS; PHP 8.2/8.5 ZTS+debug; PHP 8.5 ASan/UBSan | Published PIE package target |
@@ -204,8 +207,8 @@ automatically.
 - [Architecture](docs/ARCHITECTURE.md) defines the extension/library boundary and operator handler contract.
 - [Native Parser ABI](docs/NATIVE_PARSER_ABI.md) records the internal neutral-AST and failure interface.
 - [Development](docs/DEVELOPMENT.md) covers generated sources, verification, CI, tests, and repository layout.
-- [Cross-repository handoff](docs/HANDOFF.md) records current yumemi.php integration work and unresolved release
-  choices.
+- [Release and compatibility policy](docs/RELEASE.md) defines the initial support envelope and release procedure.
+- [Cross-repository handoff](docs/HANDOFF.md) records current yumemi.php integration and release-qualification state.
 - [Changelog](CHANGELOG.md) summarizes release-facing changes.
 
 ## License

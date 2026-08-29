@@ -24,6 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Qualify PHP 8.2 and 8.5 ZTS/debug builds and a PHP 8.5 Clang ASan/UBSan build on x86_64 Linux.
 - Add `config.w32` and qualify source builds on Intel and Apple Silicon macOS and on x64 Windows NTS and TS builds.
 - Run native-platform matrices on direct `develop` pushes and on their `darwin/` and `windows/` qualification branches.
+- Add the release and compatibility policy, including the supported Linux PIE envelope, best-effort native source-build
+  combinations, coordinated versioning, and release-tag qualification.
 
 ### Fixed
 

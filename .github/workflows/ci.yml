@@ -7,6 +7,8 @@ on:
       - develop
       - "darwin/**"
       - "windows/**"
+    tags:
+      - "v*"
   pull_request:
     branches:
       - master
@@ -53,7 +55,10 @@ jobs:
   macos:
     if: >-
       ${{
-        (github.event_name == 'push' && github.ref_name == 'develop') ||
+        (github.event_name == 'push' &&
+          (github.ref_name == 'develop' ||
+            github.ref_name == 'master' ||
+            startsWith(github.ref, 'refs/tags/v'))) ||
         startsWith(github.head_ref || github.ref_name, 'darwin/')
       }}
     name: "macOS | PHP ${{ matrix.php-version }} ${{ matrix.arch }}"
@@ -91,7 +96,10 @@ jobs:
   windows:
     if: >-
       ${{
-        (github.event_name == 'push' && github.ref_name == 'develop') ||
+        (github.event_name == 'push' &&
+          (github.ref_name == 'develop' ||
+            github.ref_name == 'master' ||
+            startsWith(github.ref, 'refs/tags/v'))) ||
         startsWith(github.head_ref || github.ref_name, 'windows/')
       }}
     runs-on: windows-2022

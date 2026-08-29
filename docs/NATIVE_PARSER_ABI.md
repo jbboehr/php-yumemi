@@ -122,5 +122,6 @@ ordinary parsing.
 
 The current yumemi.php adapter accepts ABI version `1` exactly and rejects malformed nodes even when the version
 matches. Any incompatible change to node kinds, required fields, span meaning, or structured failure metadata requires
-a new ABI integer. The support lifetime for older experimental ABI versions remains a release-policy decision; callers
-must keep the fail-closed fallback.
+a new ABI integer. While this seam remains internal and experimental, a coordinated release may stop accepting an older
+ABI without preserving it in the extension; yumemi.php must retain its fail-closed PHP fallback and name compatible
+extension versions in its release notes.

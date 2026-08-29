@@ -4,11 +4,12 @@ Snapshot date: 2026-08-29
 
 This is a coordination note for work that spans php-yumemi and
 [yumemi.php](https://github.com/jbboehr/yumemi.php). Stable design and maintenance information lives in
-[Architecture](ARCHITECTURE.md), [Native Parser ABI](NATIVE_PARSER_ABI.md), and [Development](DEVELOPMENT.md).
+[Architecture](ARCHITECTURE.md), [Native Parser ABI](NATIVE_PARSER_ABI.md), [Development](DEVELOPMENT.md), and the
+[release and compatibility policy](RELEASE.md).
 
 ## Repository state
 
-- php-yumemi `develop` baseline:
+- php-yumemi behavior baseline:
   [`c326537`](https://github.com/jbboehr/php-yumemi/commit/c326537e7939bef490b4834cc0b733d6af8e189c)
 - yumemi.php `develop` baseline, including native parsing, operator hardening, and receiver-independent multiplication:
   [`a5afea2`](https://github.com/jbboehr/yumemi.php/commit/a5afea2a9e50f199683c75fca16805708ac8b65e)
@@ -41,7 +42,7 @@ receiver recovery is therefore not required in php-yumemi.
 
 ## Verification snapshot
 
-The php-yumemi baseline passed all 11 jobs in
+The php-yumemi behavior baseline passed all 11 jobs in
 [GitHub Actions run 33235772245](https://github.com/jbboehr/php-yumemi/actions/runs/33235772245), including the Linux,
 macOS, and Windows matrices described in [Development](DEVELOPMENT.md#native-ci-matrix).
 
@@ -52,20 +53,21 @@ exact lexemes, structured failures, previous-exception chaining, and fallback be
 
 These results are a dated snapshot, not a replacement for running both repositories' current gates after a change.
 
-## Next cross-repository work
+## Release qualification
 
-- Decide whether macOS and Windows remain source-build qualification or become supported distribution targets.
-- Tag the first release of the existing Packagist PIE package once the platform envelope is settled.
-- Coordinate release notes and installation guidance between both repositories.
-- Decide how long stable releases must retain older native parser ABI versions.
+The initial policy decisions are recorded in [Release and compatibility policy](RELEASE.md):
 
-PECL `package.xml` work is not planned unless a separate PECL publication requirement appears.
+- x86_64 Linux with PHP 8.2 through 8.5 NTS and ZTS is the intended supported PIE envelope for the first tag;
+- the listed macOS and Windows combinations remain best-effort source-build qualifications rather than broader
+  distribution promises;
+- `InternalQuantity`, native parser ABI version 1, neutral syntax objects, and C declarations remain internal
+  cross-package seams rather than application APIs;
+- the internal base remains signature-free, and scalar-left `+` and `-` remain unsupported;
+- `yumemi-operators.neon` is the explicit PHPStan declaration that an application enables operator-bearing code; and
+- each repository owns release notes for its own public boundary and cross-references the compatible counterpart when a
+  coordinated seam changes.
 
-## Open release decisions
-
-- Is `InternalQuantity` the final published class name and compatibility classification?
-- Should a future version declare abstract arithmetic signatures on the internal base?
-- Should scalar-left `+` or `-` ever gain semantics?
-- Which qualified macOS and Windows combinations are release requirements rather than best-effort CI?
-- Does the extension need a public C header/API, or can native declarations remain private?
-- Which repository owns coordinated release notes and installation documentation?
+The PIE package is already registered on Packagist and exposes its development branches. The remaining operational work
+is to choose the compatible tagged yumemi.php release, verify and tag the first php-yumemi version, confirm Packagist
+indexes that tag, and prove a clean paired installation. PECL `package.xml` work is not planned unless a separate PECL
+publication requirement appears.

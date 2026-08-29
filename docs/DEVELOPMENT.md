@@ -68,8 +68,8 @@ using the default check, or use a `path:` flake reference while developing them.
 
 ## Native CI matrix
 
-Direct pushes to `develop` run every job below. Qualification branches beginning with `darwin/` or `windows/` run only
-their matching native-platform matrix.
+Direct pushes to `develop` and `master`, plus `v*` tag pushes, run every job below. Qualification branches beginning
+with `darwin/` or `windows/` run only their matching native-platform matrix.
 
 | Platform | Matrix |
 | --- | --- |
