@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - develop
+      - "darwin/**"
+      - "windows/**"
   pull_request:
     branches:
       - master
@@ -15,6 +17,11 @@ permissions:
 
 jobs:
   test:
+    if: >-
+      ${{
+        !startsWith(github.head_ref || github.ref_name, 'darwin/') &&
+        !startsWith(github.head_ref || github.ref_name, 'windows/')
+      }}
     runs-on: ubuntu-latest
     name: "Test | PHP ${{ matrix.php-version }}"
     strategy:
@@ -43,7 +50,73 @@ jobs:
         if: failure()
         run: find tests -name '*.log' -exec cat {} \;
 
+  macos:
+    if: ${{ startsWith(github.head_ref || github.ref_name, 'darwin/') }}
+    name: "macOS | PHP ${{ matrix.php-version }} ${{ matrix.arch }}"
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php-version: "8.2"
+            arch: x64
+            runner: macos-15-intel
+          - php-version: "8.5"
+            arch: arm64
+            runner: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          coverage: "none"
+          php-version: "${{ matrix.php-version }}"
+      - run: phpize
+      - run: ./configure --enable-yumemi
+      - run: make
+      - run: make test
+        env:
+          NO_INTERACTION: 1
+          REPORT_EXIT_STATUS: 1
+      - name: Show PHPT logs
+        if: failure()
+        run: find tests -name '*.log' -exec cat {} \;
+      - name: Verify extension is loaded
+        run: php -n -d extension="$(pwd)/modules/yumemi.so" --ri yumemi
+
+  windows:
+    if: ${{ startsWith(github.head_ref || github.ref_name, 'windows/') }}
+    runs-on: windows-2022
+    name: "Windows | PHP ${{ matrix.php-version }} ${{ matrix.ts }} x64"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php-version: "8.2"
+            ts: nts
+          - php-version: "8.4"
+            ts: nts
+          - php-version: "8.4"
+            ts: ts
+          - php-version: "8.5"
+            ts: nts
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and test the Windows extension
+        uses: php/php-windows-builder/extension@v1
+        with:
+          php-version: "${{ matrix.php-version }}"
+          arch: x64
+          ts: "${{ matrix.ts }}"
+          args: --enable-yumemi
+          test-workers: "1"
+
   nix:
+    if: >-
+      ${{
+        !startsWith(github.head_ref || github.ref_name, 'darwin/') &&
+        !startsWith(github.head_ref || github.ref_name, 'windows/')
+      }}
     runs-on: ubuntu-latest
     name: Nix
     steps:

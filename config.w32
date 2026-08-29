@@ -1,0 +1,11 @@
+ARG_ENABLE("yumemi", "yumemi support", "no");
+
+if (PHP_YUMEMI != "no") {
+    AC_DEFINE("HAVE_YUMEMI", 1, "Define to 1 if the PHP extension 'yumemi' is available.");
+    EXTENSION(
+        "yumemi",
+        "src\\extension.c src\\internal_quantity.c src\\parser\\native_lexer.c src\\parser\\native_parser.c src\\parser\\parser.c src\\parser\\scanner.c",
+        true,
+        "/DYY_NO_UNISTD_H=1 /DZEND_ENABLE_STATIC_TSRMLS_CACHE=1"
+    );
+}
