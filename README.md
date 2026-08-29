@@ -138,6 +138,13 @@ treated as commutative at the handler boundary. yumemi.php also defines quantity
 which operand Zend presents as the receiver: accepted products are canonical and retain the shared registry context,
 while rejected cross-context products expose the same failure from either order.
 
+Comparison operators are intentionally not overloaded for now. Zend exposes a single comparison callback shared by
+`==`, `!=`, `<`, `<=`, `>`, `>=`, `<=>`, and implicit consumers such as `sort()`, `min()`, and `max()`; the extension
+cannot limit that callback to explicit operator syntax. Installing it would therefore make incompatible dimensions or
+registry contexts throw from otherwise implicit comparisons too. Use yumemi.php's named methods such as `compareTo()`,
+`equals()`, and `lessThan()` instead. Strict identity operators `===` and `!==` remain ordinary PHP object-identity
+checks and cannot be overloaded.
+
 ## Native parser selection
 
 The currently compatible yumemi.php `develop` branch selects the native parser automatically. Applications do not call

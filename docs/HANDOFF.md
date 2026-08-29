@@ -53,6 +53,20 @@ exact lexemes, structured failures, previous-exception chaining, and fallback be
 
 These results are a dated snapshot, not a replacement for running both repositories' current gates after a change.
 
+## Deferred comparison operators
+
+Native comparison delegation was evaluated and is intentionally excluded from `develop` for now. Zend provides one
+comparison callback for every non-strict operator and for implicit comparison consumers, so it cannot offer explicit
+quantity syntax without also changing `sort()`, `min()`, `max()`, and similar engine behavior. Incompatible quantities
+would then throw from all of those paths, and `>`/`>=` use a swapped receiver order.
+
+The evaluated extension-only implementation is preserved on the remote php-yumemi branch
+[`comparison/operators`](https://github.com/jbboehr/php-yumemi/tree/comparison/operators) at commit
+[`4e3f160`](https://github.com/jbboehr/php-yumemi/commit/4e3f160ec305fd034ca71407b1a78015d2193d15)
+for future reference, but it is not part of the current integration contract. yumemi.php's named comparison methods
+remain authoritative. Its `yumemi.invalidQuantityComparison` PHPStan diagnostic covers incompatible named method calls;
+it does not enable or validate unsupported comparison-operator syntax.
+
 ## Release qualification
 
 The initial policy decisions are recorded in [Release and compatibility policy](RELEASE.md):
@@ -63,6 +77,7 @@ The initial policy decisions are recorded in [Release and compatibility policy](
 - `InternalQuantity`, native parser ABI version 1, neutral syntax objects, and C declarations remain internal
   cross-package seams rather than application APIs;
 - the internal base remains signature-free, and scalar-left `+` and `-` remain unsupported;
+- comparison operators remain unsupported; applications use yumemi.php's named comparison methods;
 - `yumemi-operators.neon` is the explicit PHPStan declaration that an application enables operator-bearing code; and
 - each repository owns release notes for its own public boundary and cross-references the compatible counterpart when a
   coordinated seam changes.

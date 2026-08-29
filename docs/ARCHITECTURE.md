@@ -87,6 +87,19 @@ identity. Its integration matrix compares operator syntax with method calls acro
 temporary expressions, compound assignment, symbolic-factor order, and registry contexts. Accepted products are
 canonical and retain the shared context; rejected cross-context products expose the same exception from either order.
 
+### Comparison remains method-only
+
+The extension deliberately does not install a Zend `compare` handler for now. `zend_object_compare_t` receives two
+operands but no source opcode or indication of why the engine requested a comparison. One callback would therefore
+define the relation for all non-strict comparison operators and for implicit engine consumers such as `sort()`,
+`min()`, and `max()`.
+
+Yumemi quantity comparison is a partial natural order: `compareTo()` throws for incompatible dimensions or registry
+contexts. A native handler would propagate those exceptions from implicit consumers as well as visible operator
+syntax, and PHP compiles `>` and `>=` as swapped `<` and `<=` operations. That broader behavior is not part of the
+current operator contract. Applications should use yumemi.php's named comparison methods, while `===` and `!==` retain
+their non-overloadable object-identity meaning.
+
 ## Native syntax path
 
 The native lexer and parser remain syntax-only:

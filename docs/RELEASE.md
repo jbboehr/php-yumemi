@@ -64,6 +64,11 @@ PHPStan cannot discover whether a deployment loads the native module. Applicatio
 inference by including yumemi.php's `yumemi-operators.neon`; this explicit declaration is the supported discovery
 mechanism.
 
+The initial operator surface does not include quantity comparison syntax. Zend's comparison hook also controls implicit
+engine consumers and cannot distinguish them from explicit operators, while yumemi.php comparisons may throw for
+incompatible quantities. Applications should use the named comparison methods unless a future coordinated release
+explicitly adopts that broader runtime contract.
+
 ## Prepare and verify a release
 
 Releases are prepared on `develop`, merged without untested changes into `master`, and tagged from the exact verified
