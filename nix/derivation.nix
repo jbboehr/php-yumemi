@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only WITH romic-exception
 {
+  buildPecl ? php.buildPecl,
   lib,
   php,
   src,
@@ -28,7 +29,7 @@ let
     deprecated = false;
   };
 in
-(php.buildPecl {
+(buildPecl {
   pname = "yumemi";
   version = "0.1.0-dev";
 

@@ -16,7 +16,7 @@ the earlier load-only scaffold.
 | Composer platform package | `ext-yumemi` |
 | Development version | `0.1.0-dev` |
 | Target PHP versions | 8.2 through 8.5 |
-| Verified platform | x86_64 Linux, non-thread-safe PHP builds |
+| Verified platform | x86_64 Linux, NTS plus PHP 8.2/8.5 ZTS and debug builds |
 | License | `AGPL-3.0-only WITH romic-exception` |
 
 The repository now contains:
@@ -110,6 +110,7 @@ constraints on the pure-PHP library while the cross-repository API remains exper
 | `009-native-parser.phpt` | Parser ABI, AST kinds, precedence, exact lexemes, and byte spans |
 | `010-native-parser-failures.phpt` | Structured syntax failures and inherited lexer resource limits |
 | `011-native-error-metadata.phpt` | Machine-readable unexpected/expected tokens and resource-limit metadata |
+| `012-build-qualification.phpt` | Requested ZTS and debug runtime modes in qualification builds |
 
 ## Verification
 
@@ -139,10 +140,13 @@ nix flake check --keep-going -L
 Maintainers can regenerate or verify both committed Flex/Bison outputs after configuring the extension with
 `make generate-sources` or `make check-generated-sources`. The ordinary build never regenerates them implicitly.
 
-The complete eleven-test PHPT suite passes on PHP 8.2, 8.3, 8.4, and 8.5 NTS builds on x86_64 Linux. The parser also
-extends the generated-source check to Bison output. The PIE check validates the Composer manifest, performs a clean
-PHP 8.2 PIE build without Flex or Bison, and loads the resulting module. When new files are still untracked, the default
-Git-backed flake source omits them; stage them first or verify with a `path:` flake source containing the intended tree.
+The twelve-test PHPT collection runs on PHP 8.2, 8.3, 8.4, and 8.5 NTS builds on x86_64 Linux: all eleven behavior tests
+pass and the build-mode-only test skips. All twelve pass on debug-enabled ZTS builds at the PHP 8.2 and 8.5 endpoints.
+A PHP 8.5 Clang ASan/UBSan build also passes all eleven behavior tests with Zend's allocator disabled. The real
+yumemi.php extension integration suite passes under both qualified ZTS/debug endpoints. The parser extends the
+generated-source check to Bison output. The PIE check validates the Composer manifest, performs a clean PHP 8.2 PIE
+build without Flex or Bison, and loads the resulting module. When new files are still untracked, the default Git-backed
+flake source omits them; stage them first or verify with a `path:` flake source containing the intended tree.
 
 ## Implemented native syntax parser
 
@@ -182,7 +186,7 @@ new semantic dependency.
 
 The next slice is portability and release qualification:
 
-- verify or deliberately reject ZTS, debug, sanitizer, macOS, and additional architecture builds;
+- verify macOS and additional architecture builds;
 - register the tagged PIE package with Packagist once the supported envelope is settled;
 - coordinate release notes between the extension and yumemi.php; and
 - decide whether the experimental native parser ABI needs a longer-lived compatibility policy before a stable release.
@@ -200,6 +204,6 @@ Do not answer these accidentally inside an unrelated implementation patch:
   operands, or is an equivalent commutative result sufficient?
 - Should scalar-left `+` or `-` ever gain semantics? They are currently deliberately unsupported.
 - How does PHPStan discover that operator syntax is available in a particular application environment?
-- Which OS, ZTS, sanitizer, and debug-build combinations are release requirements?
+- Which macOS and additional architecture combinations are release requirements?
 - Does the extension need a public C header/API, or can native declarations remain private?
 - Which repository owns coordinated release notes and installation documentation?

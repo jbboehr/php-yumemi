@@ -103,11 +103,17 @@
 
         makePackage =
           {
+            buildPecl ? php.buildPecl,
             php,
             checkSupport ? false,
           }:
           pkgs.callPackage ./nix/derivation.nix {
-            inherit php src checkSupport;
+            inherit
+              buildPecl
+              checkSupport
+              php
+              src
+              ;
           };
 
         packagesByPhp = lib.mapAttrs (_: php: makePackage { inherit php; }) phpVersions;
@@ -118,6 +124,59 @@
             checkSupport = true;
           }
         ) phpVersions;
+        makeQualificationPhp =
+          php:
+          php.override {
+            ztsSupport = true;
+            phpAttrsOverrides = _final: previous: {
+              configureFlags = previous.configureFlags ++ [ "--enable-debug" ];
+            };
+          };
+        qualificationPhpVersions = {
+          php82 = makeQualificationPhp pkgs.php82;
+          php85 = makeQualificationPhp pkgs.php85;
+        };
+        qualificationChecks = lib.mapAttrs' (
+          name: php:
+          lib.nameValuePair "${name}-zts-debug" (
+            (makePackage {
+              inherit php;
+              checkSupport = true;
+            }).overrideAttrs
+              {
+                pname = "yumemi-${name}-zts-debug";
+                YUMEMI_EXPECT_ZTS = "1";
+                YUMEMI_EXPECT_DEBUG = "1";
+              }
+          )
+        ) qualificationPhpVersions;
+        sanitizerCheck =
+          let
+            php = phpVersions.php85;
+            buildPecl = pkgs.callPackage "${nixpkgs}/pkgs/build-support/php/build-pecl.nix" {
+              inherit php;
+              stdenv = pkgs.clangStdenv;
+            };
+          in
+          (makePackage {
+            inherit buildPecl php;
+            checkSupport = true;
+          }).overrideAttrs
+            (previous: {
+              pname = "yumemi-php85-clang-sanitizers";
+              CFLAGS = "-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined";
+              LDFLAGS = "-fsanitize=address,undefined";
+              preCheck = (previous.preCheck or "") + ''
+                nm -D modules/yumemi.so > sanitizer-symbols
+                grep -q '__asan_' sanitizer-symbols
+                grep -q '__ubsan_' sanitizer-symbols
+                export LD_PRELOAD=${pkgs.llvmPackages.compiler-rt}/lib/linux/libclang_rt.asan-x86_64.so
+                export ASAN_OPTIONS=detect_leaks=0:halt_on_error=1:abort_on_error=1
+                export UBSAN_OPTIONS=halt_on_error=1:abort_on_error=1:print_stacktrace=1
+                export USE_ZEND_ALLOC=0
+                export USE_TRACKED_ALLOC=1
+              '';
+            });
         generatedSources =
           pkgs.runCommand "php-yumemi-generated-sources"
             {
@@ -214,7 +273,13 @@
           }
           // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
             pie-packaging = piePackaging;
-          };
+          }
+          // lib.optionalAttrs (system == "x86_64-linux") (
+            qualificationChecks
+            // {
+              php85-clang-sanitizers = sanitizerCheck;
+            }
+          );
         devShells = devShellsByPhp // {
           default = devShellsByPhp.php82;
         };

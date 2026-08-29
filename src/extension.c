@@ -35,6 +35,15 @@ static PHP_MINIT_FUNCTION(yumemi)
     return yumemi_register_native_parser();
 }
 
+static PHP_RINIT_FUNCTION(yumemi)
+{
+#if defined(ZTS) && defined(COMPILE_DL_YUMEMI)
+    ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+
+    return SUCCESS;
+}
+
 static PHP_MINFO_FUNCTION(yumemi)
 {
     php_info_print_table_start();
@@ -50,7 +59,7 @@ zend_module_entry yumemi_module_entry = {
     NULL,
     PHP_MINIT(yumemi),
     NULL,
-    NULL,
+    PHP_RINIT(yumemi),
     NULL,
     PHP_MINFO(yumemi),
     PHP_YUMEMI_VERSION,

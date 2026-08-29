@@ -19,7 +19,7 @@
     },
     "php-ext": {
         "extension-name": "yumemi",
-        "support-zts": false,
+        "support-zts": true,
         "support-nts": true,
         "os-families": [
             "linux"

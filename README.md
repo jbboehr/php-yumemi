@@ -12,7 +12,8 @@ names or constructs semantic unit expressions.
 ## Status
 
 This is an early experiment, not a supported release. The initial build and PIE package target PHP 8.2 through 8.5 on
-Linux non-thread-safe builds. Windows, ZTS, and other Unix-like platforms remain unsupported or unverified.
+Linux NTS and ZTS builds. ZTS is qualified with debug-enabled PHP 8.2 and 8.5 builds on x86_64 Linux. Windows and other
+Unix-like platforms remain unsupported or unverified.
 
 ## Operators
 
@@ -43,8 +44,9 @@ After a tagged release is registered with Packagist, the corresponding package c
 pie install jbboehr/php-yumemi
 ```
 
-The current manifest deliberately admits only the verified Linux NTS platform and PHP 8.2 through 8.5. It does not
-claim Windows or ZTS support. This project targets PIE rather than PECL, so it does not carry a `package.xml` manifest.
+The current manifest admits Linux NTS and ZTS builds on PHP 8.2 through 8.5. PIE's ZTS flag applies to that complete
+envelope; the current ZTS qualification evidence is narrower—PHP 8.2 and 8.5 debug builds on x86_64 Linux. The manifest
+does not claim Windows support. This project targets PIE rather than PECL, so it does not carry a `package.xml` manifest.
 
 ## Build from source
 
@@ -113,7 +115,8 @@ make test
 
 Select another supported PHP version by attribute, for example `nix develop .#php85` or `nix build .#php85`. Run the
 PHPT suite against every supported PHP version and verify Nix formatting with `nix flake check`. Format Nix files with
-`nix fmt`. With direnv installed, the checked-in `.envrc` enters the default shell automatically.
+`nix fmt`. On x86_64 Linux, that gate also exercises PHP 8.2 and 8.5 ZTS/debug builds and a Clang ASan/UBSan build. With
+direnv installed, the checked-in `.envrc` enters the default shell automatically.
 
 ## Layout
 
