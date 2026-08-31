@@ -67,13 +67,17 @@ The `do_operation` handler maps Zend opcodes to userland methods:
 | `*` | `ZEND_MUL` | `mul()` |
 | `/` | `ZEND_DIV` | `div()` |
 | `**` | `ZEND_POW` | `pow()` |
+| unary `+` | `ZEND_MUL` with `1` | `mul()` |
+| unary `-` | `ZEND_MUL` with `-1` | `mul()` |
 
 When a quantity is the right operand of `ZEND_DIV`, the handler instead calls `rdiv()` on that quantity and forwards
 the left operand as the numerator. For every delegated operation, the userland method receives the other operand
 unchanged and owns its accepted types, result, and exceptions.
 
-Unsupported opcodes return `FAILURE`, allowing PHP to retain its normal error behavior. Scalar-left `+`, `-`, and `**`
-are deliberately unsupported. Scalar multiplication delegates to the quantity from either side.
+Unsupported opcodes return `FAILURE`, allowing PHP to retain its normal error behavior. On PHP 8.2 through 8.5, Zend
+lowers unary signs through multiplication, so they use the same handler path without a separate unary callback. Binary
+scalar-left `+`, `-`, and `**` are deliberately unsupported. Scalar multiplication delegates to the quantity from
+either side.
 
 ### Multiplication receiver contract
 
@@ -97,8 +101,10 @@ define the relation for all non-strict comparison operators and for implicit eng
 Yumemi quantity comparison is a partial natural order: `compareTo()` throws for incompatible dimensions or registry
 contexts. A native handler would propagate those exceptions from implicit consumers as well as visible operator
 syntax, and PHP compiles `>` and `>=` as swapped `<` and `<=` operations. That broader behavior is not part of the
-current operator contract. Applications should use yumemi.php's named comparison methods, while `===` and `!==` retain
-their non-overloadable object-identity meaning.
+current operator contract. Without a native handler, non-strict operators still perform PHP's ordinary object-state
+comparison; they are not quantity comparisons and may disagree with the named methods for equivalent values expressed
+in different units. Applications should use yumemi.php's named comparison methods, while `===` and `!==` retain their
+non-overloadable object-identity meaning.
 
 ## Native syntax path
 
@@ -121,8 +127,10 @@ pinned data and guarded against PHP's runtime PCRE version. The parser allocates
 and performs no unit lookup.
 
 yumemi.php admits this path only through the versioned, fail-closed interface described in
-[Native Parser ABI](NATIVE_PARSER_ABI.md). Missing, disabled, incompatible, or future-ABI extensions use the generated
-PHP parser. Resource limits apply before semantic resolution in both paths.
+[Native Parser ABI](NATIVE_PARSER_ABI.md). The current adapter checks the ABI and runtime Unicode compatibility
+separately. `NativeParser::supports()` gives a future coordinated adapter one atomic check for both conditions. Missing,
+disabled, incompatible, or future-ABI extensions use the generated PHP parser. Resource limits apply before semantic
+resolution in both paths.
 
 ## Public and internal surfaces
 

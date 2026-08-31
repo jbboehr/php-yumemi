@@ -17,9 +17,15 @@ Every failed check selects the generated PHP parser. Native parsing is an optimi
 The setting is case-insensitive: unset, `1`, `true`, `on`, and `yes` permit native selection, while `0`, `false`, `off`,
 `no`, and the empty string select the PHP fallback. Any other explicit value also fails closed to the fallback.
 
-`isCompatible()` is fail-closed. It returns `true` only when PHP's runtime `PCRE_VERSION` exactly matches the Unicode
-tables committed with the extension. This prevents the native lexer and yumemi.php's PCRE-based lexer from assigning
-different boundaries to the same Unicode identifier.
+`supports(int $abiVersion)` is the preferred gate for the next coordinated adapter update. It returns `true` only when
+the requested ABI equals the installed ABI and PHP's runtime `PCRE_VERSION` exactly matches the Unicode tables committed
+with the extension. This prevents an adapter from checking one condition but accidentally omitting the other. It also
+prevents the native lexer and yumemi.php's PCRE-based lexer from assigning different boundaries to the same Unicode
+identifier.
+
+`ABI_VERSION` and `isCompatible()` remain available as inspection seams. `isCompatible()` reports only the Unicode
+condition. The current yumemi.php adapter still checks these two seams separately. Once it migrates to `supports()`, an
+older extension without that method will be incompatible and must fall back to the generated PHP parser.
 
 ## Parser result
 

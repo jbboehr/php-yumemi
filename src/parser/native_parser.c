@@ -383,6 +383,21 @@ static PHP_METHOD(NativeParser, isCompatible)
     RETURN_BOOL(yumemi_lexer_is_compatible());
 }
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_parser_supports, 0, 1, _IS_BOOL, 0)
+ZEND_ARG_TYPE_INFO(0, abiVersion, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+static PHP_METHOD(NativeParser, supports)
+{
+    zend_long abi_version;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+    Z_PARAM_LONG(abi_version)
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_BOOL(abi_version == YUMEMI_NATIVE_PARSER_ABI_VERSION && yumemi_lexer_is_compatible());
+}
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_parser_parse, 0, 1, IS_ARRAY, 0)
 ZEND_ARG_TYPE_INFO(0, input, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -453,6 +468,7 @@ static PHP_METHOD(NativeParser, parse)
 
 static const zend_function_entry yumemi_native_parser_methods[] = {
     PHP_ME(NativeParser, isCompatible, arginfo_native_parser_is_compatible, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+        PHP_ME(NativeParser, supports, arginfo_native_parser_supports, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
         PHP_ME(NativeParser, parse, arginfo_native_parser_parse, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC) PHP_FE_END
 };
 

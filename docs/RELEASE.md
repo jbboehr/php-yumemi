@@ -20,7 +20,7 @@ The following are cross-package implementation seams, not application APIs:
 
 - `jbboehr\Yumemi\InternalQuantity` and its object-handler layout;
 - the native lexer and parser classes, neutral AST arrays, and exception objects;
-- `NativeParser::ABI_VERSION`, including the current ABI version `1`; and
+- `NativeParser::ABI_VERSION` and `NativeParser::supports()`, including the current ABI version `1`; and
 - all C declarations and headers in this repository.
 
 Applications should use `Quantity` and the public parser behavior exposed by yumemi.php. The two repositories may
@@ -51,7 +51,8 @@ dependency:
 
 - yumemi.php must continue to install and pass its primary tests without `ext-yumemi`;
 - the extension must not duplicate unit, conversion, registry, or arithmetic semantics;
-- yumemi.php selects native parsing only when the advertised parser ABI and Unicode compatibility gate match;
+- yumemi.php selects native parsing only when the advertised parser ABI and Unicode compatibility conditions both
+  match; `NativeParser::supports()` is the preferred atomic gate for the coordinated adapter update;
 - applications should upgrade both packages together while the extension seams remain provisional; and
 - a release note that changes an operator or parser seam must name the compatible release or commit in the other
   repository.
@@ -62,12 +63,15 @@ migration. A coordinated change belongs in both changelogs from those respective
 
 PHPStan cannot discover whether a deployment loads the native module. Applications opt into quantity-operator
 inference by including yumemi.php's `yumemi-operators.neon`; this explicit declaration is the supported discovery
-mechanism.
+mechanism. An application that uses the operators should also require `ext-yumemi` in its root Composer project so
+deployment checks fail when the module is absent; portable libraries should continue to depend only on yumemi.php.
 
 The initial operator surface does not include quantity comparison syntax. Zend's comparison hook also controls implicit
 engine consumers and cannot distinguish them from explicit operators, while yumemi.php comparisons may throw for
-incompatible quantities. Applications should use the named comparison methods unless a future coordinated release
-explicitly adopts that broader runtime contract.
+incompatible quantities. In the absence of a handler, PHP still applies its ordinary object-state comparison, which is
+not a quantity relation and can disagree with named methods. Applications should use the named comparison methods
+unless a future coordinated release explicitly adopts that broader runtime contract. Unary `+` and `-` are supported
+through Zend's multiplication lowering and delegate to `mul(1)` and `mul(-1)` respectively.
 
 ## Prepare and verify a release
 

@@ -79,6 +79,15 @@ Confirm the active PHP installation sees the module with:
 php --ri yumemi
 ```
 
+Applications that enable operator syntax should also record the runtime dependency in their root Composer project:
+
+```console
+composer require 'ext-yumemi:*'
+```
+
+This does not install the extension; it makes Composer verify that the deployment PHP has it loaded. Reusable packages
+should not require `ext-yumemi`, because yumemi.php's public methods and generated parser remain portable without it.
+
 Once loaded, existing yumemi.php quantities gain operator syntax:
 
 ```php
@@ -129,28 +138,32 @@ For descendants of `jbboehr\Yumemi\InternalQuantity`, the extension delegates:
 | `$quantity / $other` | `$quantity->div($other)` |
 | `$quantity ** $power` | `$quantity->pow($power)` |
 | `$numerator / $quantity` | `$quantity->rdiv($numerator)` |
+| `+$quantity` | `$quantity->mul(1)` |
+| `-$quantity` | `$quantity->mul(-1)` |
 
 The selected method receives the other operand unchanged, owns its validation, and supplies the result or exception.
-Scalar multiplication works from either side. Scalar-left `+`, `-`, and `**` remain unsupported.
+Scalar multiplication works from either side. On the supported PHP versions, Zend lowers unary signs through
+multiplication, so they follow the same `mul()` contract. Binary scalar-left `+`, `-`, and `**` remain unsupported.
 
 PHP may reorder multiplication operands before invoking an internal object handler. Scalar multiplication is therefore
 treated as commutative at the handler boundary. yumemi.php also defines quantity-by-quantity products independently of
 which operand Zend presents as the receiver: accepted products are canonical and retain the shared registry context,
 while rejected cross-context products expose the same failure from either order.
 
-Comparison operators are intentionally not overloaded for now. Zend exposes a single comparison callback shared by
-`==`, `!=`, `<`, `<=`, `>`, `>=`, `<=>`, and implicit consumers such as `sort()`, `min()`, and `max()`; the extension
-cannot limit that callback to explicit operator syntax. Installing it would therefore make incompatible dimensions or
-registry contexts throw from otherwise implicit comparisons too. Use yumemi.php's named methods such as `compareTo()`,
-`equals()`, and `lessThan()` instead. Strict identity operators `===` and `!==` remain ordinary PHP object-identity
-checks and cannot be overloaded.
+Comparison operators are intentionally not overloaded for now. These expressions are not rejected: PHP applies its
+ordinary object-state comparison, whose result can disagree with quantity semantics even for equivalent values written
+in different units. Zend exposes only one comparison callback shared by `==`, `!=`, `<`, `<=`, `>`, `>=`, `<=>`, and
+implicit consumers such as `sort()`, `min()`, and `max()`, so the extension cannot limit a replacement to explicit
+operator syntax. Use yumemi.php's named methods such as `compareTo()`, `equals()`, and `lessThan()` instead. Strict
+identity operators `===` and `!==` retain their ordinary PHP object-identity meaning and cannot be overloaded.
 
 ## Native parser selection
 
 The currently compatible yumemi.php `develop` branch selects the native parser automatically. Applications do not call
-`NativeLexer` or `NativeParser` directly. yumemi.php uses the native path only when the expected ABI is present and the
-extension's Unicode tables match PHP's runtime PCRE data; otherwise it uses its generated PHP parser. This adapter has
-not yet shipped in a tagged yumemi.php release.
+`NativeLexer` or `NativeParser` directly. Its current adapter checks `ABI_VERSION` and `isCompatible()` separately, then
+uses the generated PHP parser if either check fails. This extension now exposes `NativeParser::supports()` as the
+preferred atomic check for a coordinated adapter update. The yumemi.php integration has not yet shipped in a tagged
+release.
 
 Set `YUMEMI_NATIVE_PARSER` to `0`, `false`, `off`, `no`, or an empty string in the process environment to force the PHP
 parser without unloading the extension. Leave it unset, or set it to `1`, `true`, `on`, or `yes`, for automatic native
