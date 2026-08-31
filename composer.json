@@ -1,6 +1,6 @@
 {
     "name": "jbboehr/php-yumemi",
-    "description": "Native PHP extension companion for yumemi.php operators and unit-expression parsing.",
+    "description": "Native extension that adds operators and unit-expression parsing to yumemi.php.",
     "type": "php-ext",
     "license": "(AGPL-3.0-only WITH romic-exception) AND UCAR",
     "homepage": "https://github.com/jbboehr/php-yumemi",

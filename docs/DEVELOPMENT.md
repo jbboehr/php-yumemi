@@ -5,7 +5,7 @@ for component ownership and [Native Parser ABI](NATIVE_PARSER_ABI.md) for the in
 
 ## Unix-like build
 
-The ordinary development gate is:
+For a normal development build, run:
 
 ```console
 phpize
@@ -14,7 +14,7 @@ make -j4
 NO_INTERACTION=1 REPORT_EXIT_STATUS=1 make test
 ```
 
-For strict compiler warnings after configuring:
+To treat compiler warnings as errors after configuring:
 
 ```console
 make clean
@@ -27,8 +27,8 @@ not load safely into another runtime.
 
 ## Generated lexer and parser
 
-The repository commits Flex and Bison output so ordinary source and release-archive builds do not require either tool.
-Generation is explicit and never occurs as a timestamp side effect of `make`.
+The repository commits Flex and Bison output, so source builds and release archives do not require either tool.
+Generation runs only when requested. File timestamps never trigger it as a side effect of `make`.
 
 After configuring the extension, regenerate or verify both outputs with:
 
@@ -39,11 +39,11 @@ make check-generated-sources
 
 Individual targets are:
 
-- `generate-lexer` and `check-generated-lexer`;
+- `generate-lexer` and `check-generated-lexer`.
 - `generate-parser` and `check-generated-parser`.
 
-Lexer generation also rebuilds the committed Unicode classification tables using the pinned Unicode inputs. Generated
-source checks fail when a maintainer tool would produce a different committed artifact.
+Lexer generation also rebuilds the committed Unicode classification tables from pinned Unicode data. The generated
+source checks fail if the maintainer tools produce files that differ from the committed copies.
 
 ## Nix gate
 
@@ -55,16 +55,16 @@ nix flake check --keep-going -L
 
 It covers:
 
-- PHP 8.2, 8.3, 8.4, and 8.5 NTS builds and PHPTs;
-- PHP 8.2 and 8.5 ZTS/debug endpoint builds;
-- a PHP 8.5 Clang ASan/UBSan build;
-- treefmt-nix formatting and Actionlint;
-- committed Flex/Bison output;
-- Composer manifest validation; and
+- PHP 8.2, 8.3, 8.4, and 8.5 NTS builds and PHPTs.
+- PHP 8.2 and 8.5 ZTS/debug endpoint builds.
+- a PHP 8.5 Clang ASan/UBSan build.
+- treefmt-nix formatting and Actionlint.
+- committed Flex/Bison output.
+- Composer manifest validation.
 - a clean PHP 8.2 PIE build and module load without Flex or Bison.
 
-The default flake source is Git-backed. Untracked files are absent from that source; stage intended new files before
-using the default check, or use a `path:` flake reference while developing them.
+The default flake source comes from Git, so it excludes untracked files. Stage new files before using the default check,
+or use a `path:` flake reference while developing them.
 
 ## Native CI matrix
 
@@ -78,7 +78,7 @@ with `darwin/` or `windows/` run only their matching native-platform matrix.
 | Apple Silicon macOS | PHP 8.5 arm64 |
 | Windows Server 2022 x64 | PHP 8.2 NTS, PHP 8.4 NTS and TS, PHP 8.5 NTS |
 
-The macOS jobs use the ordinary `phpize` build. Windows uses `config.w32` through
+The macOS jobs use the standard `phpize` build. Windows uses `config.w32` through
 [`php/php-windows-builder`](https://github.com/php/php-windows-builder). The Windows action receives the commit SHA as
 its extension ref because it embeds that value in filenames and branch refs containing `/` are not path-safe.
 
@@ -99,7 +99,7 @@ its extension ref because it embeds that value in filenames and branch refs cont
 | `011-native-error-metadata.phpt` | Machine-readable syntax and resource metadata |
 | `012-build-qualification.phpt` | Requested ZTS/debug modes in qualification builds |
 
-The build-mode test skips in ordinary NTS runs and passes when the qualification derivation requests its mode.
+The build-mode test skips in normal NTS runs. Qualification builds pass the expected mode to the test.
 
 ## Repository layout
 
@@ -111,9 +111,9 @@ The build-mode test skips in ordinary NTS runs and passes when the qualification
 - `src/extension.c` registers the module and `phpinfo()` output.
 - `src/internal_quantity.c` registers the quantity base and operator handler.
 - `src/parser/scanner.l` defines the reentrant Flex scanner.
-- `src/parser/native_lexer.c` owns Unicode classification, limits, and the PHP lexer seam.
+- `src/parser/native_lexer.c` owns Unicode classification, limits, and the PHP lexer interface.
 - `src/parser/parser.y` defines the pure reentrant Bison grammar.
-- `src/parser/native_parser.c` owns the arena AST, failures, and PHP parser seam.
+- `src/parser/native_parser.c` owns the arena AST, failures, and PHP parser interface.
 - `scripts/generate-lexer.sh` regenerates the scanner and Unicode tables.
 - `scripts/generate-parser.sh` regenerates the C parser.
 - `Makefile.frag` supplies opt-in generated-source targets.

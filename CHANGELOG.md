@@ -8,13 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Add the loadable `yumemi` extension and the abstract `jbboehr\Yumemi\InternalQuantity` seam used by yumemi.php.
+- Add the loadable `yumemi` extension and the abstract `jbboehr\Yumemi\InternalQuantity` base used by yumemi.php.
 - Delegate `+`, `-`, `*`, `/`, and `**` to userland quantity methods, including unary signs through `mul()`, scalar
   multiplication from either side, and scalar-left division through `rdiv()`.
 - Add a reentrant native lexer for Yumemi unit expressions with version-gated Unicode parity, byte spans, and resource
   limits.
 - Add a pure reentrant native parser with an arena-backed neutral AST, structured syntax failures, byte spans, and an
-  internal seam for differential testing against yumemi.php.
+  internal interface for differential testing against yumemi.php.
 - Expose machine-readable unexpected and expected tokens plus resource-limit metadata from native parser failures.
 - Add `NativeParser::supports()` as the atomic ABI and Unicode compatibility gate for yumemi.php adapters.
 - Add opt-in Make targets for regenerating and checking the committed Flex and Bison sources.
@@ -36,5 +36,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initialize Zend's thread-local cache for each request so dynamic ZTS builds can safely use operator dispatch and the
   native parser.
-- Prevent ordinary source and release-archive builds from invoking implicit Flex or Bison regeneration based on file
+- Prevent normal source and release-archive builds from invoking implicit Flex or Bison regeneration based on file
   timestamps.

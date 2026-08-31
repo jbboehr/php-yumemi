@@ -1,31 +1,31 @@
 # Native Parser ABI
 
-The native parser interface is an internal, versioned integration seam between php-yumemi and yumemi.php. Applications
-must not consume its arrays or exceptions directly.
+The native parser interface is versioned and internal to php-yumemi and yumemi.php. Applications should not use its
+arrays or exceptions directly.
 
 ## Selection contract
 
 The current ABI version is `1`, exposed as
 `jbboehr\Yumemi\Parser\NativeParser::ABI_VERSION`. A compatible yumemi.php adapter selects the native parser only when:
 
-1. `NativeParser` is already loaded, without triggering autoload;
-2. `ABI_VERSION === 1`;
-3. `NativeParser::isCompatible()` returns `true`; and
+1. `NativeParser` is already loaded, without triggering autoload.
+2. `ABI_VERSION === 1`.
+3. `NativeParser::isCompatible()` returns `true`.
 4. the process-level `YUMEMI_NATIVE_PARSER` setting permits native parsing.
 
-Every failed check selects the generated PHP parser. Native parsing is an optimization and never a semantic dependency.
+If any check fails, yumemi.php uses the generated PHP parser. Native parsing is an optimization, not a dependency.
 The setting is case-insensitive: unset, `1`, `true`, `on`, and `yes` permit native selection, while `0`, `false`, `off`,
 `no`, and the empty string select the PHP fallback. Any other explicit value also fails closed to the fallback.
 
-`supports(int $abiVersion)` is the preferred gate for the next coordinated adapter update. It returns `true` only when
+`supports(int $abiVersion)` is the preferred check for the next adapter update. It returns `true` only when
 the requested ABI equals the installed ABI and PHP's runtime `PCRE_VERSION` exactly matches the Unicode tables committed
-with the extension. This prevents an adapter from checking one condition but accidentally omitting the other. It also
-prevents the native lexer and yumemi.php's PCRE-based lexer from assigning different boundaries to the same Unicode
-identifier.
+with the extension. One method covers both conditions, so an adapter cannot accidentally omit either one. Matching the
+PCRE version also keeps the native lexer and yumemi.php's PCRE-based lexer from assigning different boundaries to the
+same Unicode identifier.
 
-`ABI_VERSION` and `isCompatible()` remain available as inspection seams. `isCompatible()` reports only the Unicode
-condition. The current yumemi.php adapter still checks these two seams separately. Once it migrates to `supports()`, an
-older extension without that method will be incompatible and must fall back to the generated PHP parser.
+`ABI_VERSION` and `isCompatible()` remain available for inspection. `isCompatible()` reports only the Unicode
+condition. The current yumemi.php adapter still checks them separately. After it moves to `supports()`, an older
+extension without that method will use the generated PHP parser.
 
 ## Parser result
 
@@ -95,8 +95,8 @@ public readonly metadata:
 | `unexpected` | `string|null` | Bison grammar-symbol label for the unexpected token |
 | `expected` | `list<string>` | Bison grammar-symbol labels accepted at the failure point |
 
-The exception message retains Bison's detailed human-readable diagnostic and appends the byte span. Consumers translate
-the structured properties rather than parsing that prose.
+The exception message includes Bison's diagnostic and the byte span. Consumers should translate the structured
+properties instead of parsing the message.
 
 These labels are not parser AST `kind` values or native-lexer `type` values. They use the grammar's display names, such
 as `decimal number`, `end of file`, and `superscript sign without digits`, plus literal punctuation such as `(` or `)`.
@@ -116,21 +116,19 @@ internal `NativeLimitException`, a final `LengthException` descendant with nativ
 
 yumemi.php translates these values into its public parser-limit exception contract.
 
-## Native lexer seam
+## Native lexer interface
 
-`NativeLexer::tokenize(string $input): array` remains independently available for compatibility and differential tests.
-Each token contains a machine-readable `type`, exact `text`, and zero-based half-open `start` and `end` byte
-offsets. Returned token types are `integer`, `superscript-integer`, `invalid-superscript`, `decimal-number`, `dot`,
+`NativeLexer::tokenize(string $input): array` is available for compatibility and differential tests. Each token contains
+a machine-readable `type`, exact `text`, and zero-based half-open `start` and `end` byte offsets. Returned token types are
+`integer`, `superscript-integer`, `invalid-superscript`, `decimal-number`, `dot`,
 `mul`, `div`, `pow`, `sub`, `add`, `identifier`, `left-paren`, `right-paren`, `at`, and `invalid-number`. The lexer
 shares the parser's Unicode compatibility gate and resource limits.
 
-The lexer seam is not a second supported application API. yumemi.php selects `NativeParser`, not `NativeLexer`, for
-ordinary parsing.
+The lexer is not a second application API. yumemi.php selects `NativeParser`, not `NativeLexer`, for normal parsing.
 
 ## Compatibility changes
 
-The current yumemi.php adapter accepts ABI version `1` exactly and rejects malformed nodes even when the version
-matches. Any incompatible change to node kinds, required fields, span meaning, or structured failure metadata requires
-a new ABI integer. While this seam remains internal and experimental, a coordinated release may stop accepting an older
-ABI without preserving it in the extension; yumemi.php must retain its fail-closed PHP fallback and name compatible
-extension versions in its release notes.
+The current yumemi.php adapter accepts only ABI version `1` and still rejects malformed nodes when the version matches.
+Any incompatible change to node kinds, required fields, span meaning, or structured failure metadata requires a new ABI
+integer. Because the interface is internal and experimental, a coordinated release may drop an older ABI. yumemi.php
+must keep its fail-closed PHP fallback and name compatible extension versions in its release notes.

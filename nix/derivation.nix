@@ -43,7 +43,7 @@ in
   passthru = { inherit php; };
 
   meta = {
-    description = "Experimental native PHP extension companion to yumemi.php";
+    description = "Experimental extension adding operators and unit-expression parsing to yumemi.php";
     homepage = "https://github.com/jbboehr/php-yumemi";
     license = [
       (lib.licenses.WITH lib.licenses.agpl3Only romicException)
