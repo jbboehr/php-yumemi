@@ -1,5 +1,5 @@
 --TEST--
-yumemi native syntax components fail closed when Unicode tables cannot match runtime PCRE
+yumemi native syntax components use their committed Unicode tables independently of runtime PCRE
 --EXTENSIONS--
 yumemi
 --FILE--
@@ -9,25 +9,37 @@ declare(strict_types=1);
 $className = 'jbboehr\\Yumemi\\Parser\\NativeLexer';
 $parserClass = 'jbboehr\\Yumemi\\Parser\\NativeParser';
 
-var_dump(is_string($className::UNICODE_PCRE_VERSION));
+function hasLegacyCompatibilityHook(string $class): bool
+{
+    $method = new ReflectionMethod($class, 'isCompatible');
+    $returnType = $method->getReturnType();
 
-$compatible = $className::isCompatible();
-var_dump(is_bool($compatible));
-var_dump($compatible === ($className::UNICODE_PCRE_VERSION === PCRE_VERSION));
-
-try {
-    $className::tokenize("a\u{1e5d0}b");
-    $outcome = 'tokenized';
-} catch (RuntimeException $exception) {
-    $outcome = str_contains($exception->getMessage(), $className::UNICODE_PCRE_VERSION)
-        && str_contains($exception->getMessage(), PCRE_VERSION)
-            ? 'guarded'
-            : 'wrong-exception';
+    return $method->isPublic()
+        && $method->isStatic()
+        && $method->getNumberOfParameters() === 0
+        && $method->getNumberOfRequiredParameters() === 0
+        && $returnType instanceof ReflectionNamedType
+        && (string) $returnType === 'bool'
+        && !$returnType->allowsNull();
 }
 
-var_dump($outcome === ($compatible ? 'tokenized' : 'guarded'));
+var_dump($className::UNICODE_PCRE_VERSION === '10.46 2025-08-27');
+var_dump(hasLegacyCompatibilityHook($className));
+var_dump($className::isCompatible());
 
-var_dump($parserClass::isCompatible() === $compatible);
+try {
+    $tokens = $className::tokenize("a\u{1e5d0}b");
+    $lexerAvailable = count($tokens) === 1
+        && $tokens[0]['type'] === 'identifier'
+        && $tokens[0]['text'] === "a\u{1e5d0}b";
+} catch (RuntimeException) {
+    $lexerAvailable = false;
+}
+
+var_dump($lexerAvailable);
+
+var_dump(hasLegacyCompatibilityHook($parserClass));
+var_dump($parserClass::isCompatible());
 
 $hasSupports = method_exists($parserClass, 'supports');
 var_dump($hasSupports);
@@ -48,14 +60,14 @@ var_dump(count($parameters) === 1
     && !$parameters[0]->allowsNull());
 var_dump((string) $supports->getReturnType() === 'bool' && !$supports->getReturnType()->allowsNull());
 
-var_dump($parserClass::supports($parserClass::ABI_VERSION) === $compatible);
+var_dump($parserClass::supports($parserClass::ABI_VERSION));
 var_dump($parserClass::supports(0));
 var_dump($parserClass::supports($parserClass::ABI_VERSION + 1));
 
 $exactForAllBoundaries = true;
 foreach ([PHP_INT_MIN, -1, 0, $parserClass::ABI_VERSION - 1, $parserClass::ABI_VERSION,
           $parserClass::ABI_VERSION + 1, PHP_INT_MAX] as $abiVersion) {
-    $expected = $abiVersion === $parserClass::ABI_VERSION && $compatible;
+    $expected = $abiVersion === $parserClass::ABI_VERSION;
     $exactForAllBoundaries = $exactForAllBoundaries && $parserClass::supports($abiVersion) === $expected;
 }
 var_dump($exactForAllBoundaries);
@@ -69,18 +81,19 @@ try {
 var_dump($strictTypeRejected);
 
 try {
-    $parserClass::parse("a\u{1e5d0}b");
-    $outcome = 'parsed';
-} catch (RuntimeException $exception) {
-    $outcome = str_contains($exception->getMessage(), $className::UNICODE_PCRE_VERSION)
-        && str_contains($exception->getMessage(), PCRE_VERSION)
-            ? 'guarded'
-            : 'wrong-exception';
+    $ast = $parserClass::parse("a\u{1e5d0}b");
+    $parserAvailable = $ast['kind'] === 'identifier'
+        && $ast['text'] === "a\u{1e5d0}b"
+        && $ast['start'] === 0
+        && $ast['end'] === 6;
+} catch (RuntimeException) {
+    $parserAvailable = false;
 }
 
-var_dump($outcome === ($compatible ? 'parsed' : 'guarded'));
+var_dump($parserAvailable);
 ?>
 --EXPECT--
+bool(true)
 bool(true)
 bool(true)
 bool(true)

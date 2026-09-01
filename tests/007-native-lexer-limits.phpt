@@ -2,18 +2,6 @@
 yumemi native lexer enforces parser resource limits before returning tokens
 --EXTENSIONS--
 yumemi
---SKIPIF--
-<?php
-$className = 'jbboehr\\Yumemi\\Parser\\NativeLexer';
-
-if (
-    class_exists($className, false)
-    && method_exists($className, 'isCompatible')
-    && !$className::isCompatible()
-) {
-    echo 'skip native lexer Unicode tables do not match runtime PCRE';
-}
-?>
 --FILE--
 <?php
 $className = 'jbboehr\\Yumemi\\Parser\\NativeLexer';

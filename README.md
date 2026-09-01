@@ -155,17 +155,17 @@ be overloaded.
 ## Native parser selection
 
 The currently compatible yumemi.php `develop` branch selects the native parser automatically. Applications do not call
-`NativeLexer` or `NativeParser` directly. Its current adapter checks `ABI_VERSION` and `isCompatible()` separately, then
-uses the generated PHP parser if either check fails. This extension now exposes `NativeParser::supports()` as the
-preferred atomic check for a coordinated adapter update. The yumemi.php integration has not yet shipped in a tagged
-release.
+`NativeLexer` or `NativeParser` directly. Its current adapter checks `ABI_VERSION` and the legacy `isCompatible()` hook
+separately, then uses the generated PHP parser if either check fails. The hook now always returns `true`, and
+`NativeParser::supports()` is the preferred ABI check for a coordinated adapter update. The yumemi.php integration has
+not yet shipped in a tagged release.
 
 Set `YUMEMI_NATIVE_PARSER` to `0`, `false`, `off`, `no`, or an empty string in the process environment to force the PHP
 parser without unloading the extension. Leave it unset, or set it to `1`, `true`, `on`, or `yes`, for automatic native
 selection. Values are case-insensitive. Any other value selects the PHP fallback. The generated parser continues to
 work on its own. Applications should upgrade yumemi.php and `ext-yumemi` together while the integration is experimental.
 
-The array schema, structured failure metadata, Unicode gate, and ABI contract are documented in
+The array schema, structured failure metadata, committed Unicode snapshot, and ABI contract are documented in
 [Native Parser ABI](docs/NATIVE_PARSER_ABI.md).
 
 ## Build from source

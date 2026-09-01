@@ -11,12 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add the loadable `yumemi` extension and the abstract `jbboehr\Yumemi\InternalQuantity` base used by yumemi.php.
 - Delegate `+`, `-`, `*`, `/`, and `**` to userland quantity methods, including unary signs through `mul()`, scalar
   multiplication from either side, and scalar-left division through `rdiv()`.
-- Add a reentrant native lexer for Yumemi unit expressions with version-gated Unicode parity, byte spans, and resource
+- Add a reentrant native lexer for Yumemi unit expressions with committed Unicode tables, byte spans, and resource
   limits.
 - Add a pure reentrant native parser with an arena-backed neutral AST, structured syntax failures, byte spans, and an
   internal interface for differential testing against yumemi.php.
 - Expose machine-readable unexpected and expected tokens plus resource-limit metadata from native parser failures.
-- Add `NativeParser::supports()` as the atomic ABI and Unicode compatibility gate for yumemi.php adapters.
+- Add `NativeParser::supports()` as the ABI compatibility check for yumemi.php adapters.
 - Add opt-in Make targets for regenerating and checking the committed Flex and Bison sources.
 - Add a PIE package manifest for PHP 8.2 through 8.5 on Linux NTS and ZTS and a Nix check that validates, builds, and
   loads the packaged extension with PIE.
@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Make native parser exception metadata natively typed and readonly, matching the documented integration ABI.
+- Keep native parsing available across PCRE versions by using the lexer's committed Unicode snapshot on every runtime.
 
 ### Fixed
 

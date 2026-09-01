@@ -2,14 +2,6 @@
 yumemi native parser exposes a neutral span-preserving AST for parity testing
 --EXTENSIONS--
 yumemi
---SKIPIF--
-<?php
-$lexerClass = 'jbboehr\\Yumemi\\Parser\\NativeLexer';
-
-if (class_exists($lexerClass, false) && !$lexerClass::isCompatible()) {
-    echo 'skip native lexer Unicode tables do not match runtime PCRE';
-}
-?>
 --FILE--
 <?php
 $className = 'jbboehr\\Yumemi\\Parser\\NativeParser';

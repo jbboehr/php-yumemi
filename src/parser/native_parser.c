@@ -380,7 +380,7 @@ static PHP_METHOD(NativeParser, isCompatible)
 {
     ZEND_PARSE_PARAMETERS_NONE();
 
-    RETURN_BOOL(yumemi_lexer_is_compatible());
+    RETURN_TRUE;
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_parser_supports, 0, 1, _IS_BOOL, 0)
@@ -395,7 +395,7 @@ static PHP_METHOD(NativeParser, supports)
     Z_PARAM_LONG(abi_version)
     ZEND_PARSE_PARAMETERS_END();
 
-    RETURN_BOOL(abi_version == YUMEMI_NATIVE_PARSER_ABI_VERSION && yumemi_lexer_is_compatible());
+    RETURN_BOOL(abi_version == YUMEMI_NATIVE_PARSER_ABI_VERSION);
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_parser_parse, 0, 1, IS_ARRAY, 0)
@@ -414,11 +414,6 @@ static PHP_METHOD(NativeParser, parse)
     ZEND_PARSE_PARAMETERS_START(1, 1)
     Z_PARAM_STR(input)
     ZEND_PARSE_PARAMETERS_END();
-
-    if (!yumemi_lexer_is_compatible()) {
-        yumemi_lexer_throw_incompatible_pcre();
-        RETURN_THROWS();
-    }
 
     if (ZSTR_LEN(input) > YUMEMI_LEXER_INPUT_BYTES_LIMIT) {
         lexer_context.error = (yumemi_lexer_error){

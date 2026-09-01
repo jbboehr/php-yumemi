@@ -49,8 +49,8 @@ macOS, and Windows matrices described in [Development](DEVELOPMENT.md#native-ci-
 
 During native-parser integration, 520 valid expressions and ten invalid expressions matched the generated PHP parser's
 ASTs and error spans. A later deterministic 30,000-input differential probe found no mismatches. Focused yumemi.php
-tests cover selection without autoloading, the ABI and Unicode gates, forced fallback, cache isolation, AST validation,
-exact lexemes, structured failures, previous-exception chaining, and fallback behavior.
+tests cover selection without autoloading, the ABI and legacy compatibility hooks, forced fallback, cache isolation,
+AST validation, exact lexemes, structured failures, previous-exception chaining, and fallback behavior.
 
 These results are a dated snapshot, not a replacement for running both repositories' current gates after a change.
 
@@ -72,7 +72,8 @@ two quantities are physically equivalent.
 ## Pending yumemi.php follow-up
 
 php-yumemi commit `5167edc` adds `NativeParser::supports(int $abiVersion)`. The current yumemi.php adapter still checks
-`ABI_VERSION` and `isCompatible()` separately. The next yumemi.php change should:
+`ABI_VERSION` and `isCompatible()` separately. php-yumemi now keeps `isCompatible()` as an always-true legacy hook and
+uses its committed Unicode tables on every runtime. The next yumemi.php change should:
 
 - call `NativeParser::supports(1)` and fall back when the method is missing or returns `false`.
 - add an always-enabled PHPStan rule that rejects non-strict comparison operators on quantities while keeping `===` and
@@ -91,6 +92,7 @@ The initial policy decisions are recorded in [Release and compatibility policy](
 - the listed macOS and Windows combinations are source-build qualifications, not package-distribution promises.
 - `InternalQuantity`, native parser ABI version 1, the `NativeParser::supports()` helper, neutral syntax objects,
   and C declarations are internal cross-package interfaces rather than application APIs.
+- the native lexer uses its committed Unicode snapshot without requiring PHP's runtime PCRE version to match.
 - the internal base remains signature-free, unary signs delegate through `mul()`, and binary scalar-left `+` and `-`
   remain unsupported.
 - comparison operators remain unsupported, so applications use yumemi.php's named comparison methods.

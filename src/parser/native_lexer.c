@@ -12,7 +12,6 @@
 #include <string.h>
 
 #include "main/php.h"
-#include "Zend/zend_constants.h"
 #include "Zend/zend_exceptions.h"
 #include "ext/spl/spl_exceptions.h"
 
@@ -456,21 +455,6 @@ void yumemi_lexer_throw_limit(const yumemi_lexer_error *error)
     zend_update_property_long(yumemi_native_limit_exception_class, exception, ZEND_STRL("end"), (zend_long)error->end);
 }
 
-static zval *yumemi_native_lexer_runtime_pcre_version(void)
-{
-    zval *pcre_version = zend_get_constant_str(ZEND_STRL("PCRE_VERSION"));
-
-    return pcre_version != NULL && Z_TYPE_P(pcre_version) == IS_STRING ? pcre_version : NULL;
-}
-
-bool yumemi_lexer_is_compatible(void)
-{
-    zval *pcre_version = yumemi_native_lexer_runtime_pcre_version();
-
-    return pcre_version != NULL && Z_STRLEN_P(pcre_version) == sizeof(YUMEMI_UNICODE_PCRE_VERSION) - 1 &&
-           memcmp(Z_STRVAL_P(pcre_version), YUMEMI_UNICODE_PCRE_VERSION, sizeof(YUMEMI_UNICODE_PCRE_VERSION) - 1) == 0;
-}
-
 void yumemi_declare_readonly_property(zend_class_entry *class_entry,
                                       const char *name,
                                       size_t name_length,
@@ -489,17 +473,6 @@ void yumemi_declare_readonly_property(zend_class_entry *class_entry,
     zend_string_release(property_name);
 }
 
-void yumemi_lexer_throw_incompatible_pcre(void)
-{
-    zval *pcre_version = yumemi_native_lexer_runtime_pcre_version();
-
-    zend_throw_exception_ex(spl_ce_RuntimeException,
-                            0,
-                            "Yumemi native lexer Unicode tables require PCRE %s; PHP reports %s",
-                            YUMEMI_UNICODE_PCRE_VERSION,
-                            pcre_version != NULL ? Z_STRVAL_P(pcre_version) : "an unavailable PCRE version");
-}
-
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_lexer_is_compatible, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
 
@@ -507,7 +480,7 @@ static PHP_METHOD(NativeLexer, isCompatible)
 {
     ZEND_PARSE_PARAMETERS_NONE();
 
-    RETURN_BOOL(yumemi_lexer_is_compatible());
+    RETURN_TRUE;
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_lexer_tokenize, 0, 1, IS_ARRAY, 0)
@@ -527,11 +500,6 @@ static PHP_METHOD(NativeLexer, tokenize)
     ZEND_PARSE_PARAMETERS_START(1, 1)
     Z_PARAM_STR(input)
     ZEND_PARSE_PARAMETERS_END();
-
-    if (!yumemi_lexer_is_compatible()) {
-        yumemi_lexer_throw_incompatible_pcre();
-        RETURN_THROWS();
-    }
 
     if (ZSTR_LEN(input) > YUMEMI_LEXER_INPUT_BYTES_LIMIT) {
         context.error = (yumemi_lexer_error){

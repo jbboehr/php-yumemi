@@ -93,7 +93,7 @@ its extension ref because it embeds that value in filenames and branch refs cont
 | `005-operator-failures.phpt` | Missing methods, invalid arguments, unsupported operators, and exceptions |
 | `006-native-lexer.phpt` | Token kinds, exact text, Unicode behavior, and byte spans |
 | `007-native-lexer-limits.phpt` | Input, token-count, nesting, and token-size limits |
-| `008-native-lexer-compatibility.phpt` | Fail-closed lexer/parser PCRE gate and atomic parser ABI selection |
+| `008-native-lexer-compatibility.phpt` | Static Unicode tables, legacy compatibility hooks, and atomic parser ABI selection |
 | `009-native-parser.phpt` | Parser ABI, AST kinds, precedence, lexemes, and spans |
 | `010-native-parser-failures.phpt` | Structured syntax failures and inherited lexer limits |
 | `011-native-error-metadata.phpt` | Machine-readable syntax and resource metadata |

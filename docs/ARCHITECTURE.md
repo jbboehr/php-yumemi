@@ -119,15 +119,16 @@ flowchart LR
     TEXT --> LEX --> PARSE --> ARRAY --> ADAPTER --> RESOLVE
 ```
 
-The scanner is length-aware and records zero-based, half-open byte spans. Unicode character classes are generated from
-pinned data and guarded against PHP's runtime PCRE version. The parser allocates a neutral AST in a request-local arena
-and performs no unit lookup.
+The scanner is length-aware and records zero-based, half-open byte spans. Its Unicode character classes are committed
+as static tables generated from the PCRE version recorded by `NativeLexer::UNICODE_PCRE_VERSION`. The extension uses
+that snapshot on every runtime instead of disabling native parsing when PHP reports a different PCRE version. The
+parser allocates a neutral AST in a request-local arena and performs no unit lookup.
 
 yumemi.php uses this path only through the versioned, fail-closed interface described in
-[Native Parser ABI](NATIVE_PARSER_ABI.md). The current adapter checks the ABI and runtime Unicode compatibility
-separately. `NativeParser::supports()` gives a future coordinated adapter one atomic check for both conditions. Missing,
-disabled, incompatible, or future-ABI extensions use the generated PHP parser. Resource limits apply before semantic
-resolution in both paths.
+[Native Parser ABI](NATIVE_PARSER_ABI.md). The current adapter checks the ABI and the legacy `isCompatible()` hook
+separately. The hook now always returns `true`, and `NativeParser::supports()` gives a future coordinated adapter one
+ABI check. Missing, disabled, or future-ABI extensions use the generated PHP parser. Resource limits apply before
+semantic resolution in both paths.
 
 ## Public and internal surfaces
 

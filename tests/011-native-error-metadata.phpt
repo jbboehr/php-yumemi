@@ -2,14 +2,6 @@
 yumemi native parser errors expose machine-readable syntax and resource metadata
 --EXTENSIONS--
 yumemi
---SKIPIF--
-<?php
-$lexerClass = 'jbboehr\\Yumemi\\Parser\\NativeLexer';
-
-if (class_exists($lexerClass, false) && !$lexerClass::isCompatible()) {
-    echo 'skip native lexer Unicode tables do not match runtime PCRE';
-}
-?>
 --FILE--
 <?php
 $parserClass = 'jbboehr\\Yumemi\\Parser\\NativeParser';

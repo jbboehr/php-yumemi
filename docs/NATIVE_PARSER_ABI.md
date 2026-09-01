@@ -10,22 +10,31 @@ The current ABI version is `1`, exposed as
 
 1. `NativeParser` is already loaded, without triggering autoload.
 2. `ABI_VERSION === 1`.
-3. `NativeParser::isCompatible()` returns `true`.
+3. the legacy `NativeParser::isCompatible()` hook returns `true`.
 4. the process-level `YUMEMI_NATIVE_PARSER` setting permits native parsing.
 
 If any check fails, yumemi.php uses the generated PHP parser. Native parsing is an optimization, not a dependency.
 The setting is case-insensitive: unset, `1`, `true`, `on`, and `yes` permit native selection, while `0`, `false`, `off`,
 `no`, and the empty string select the PHP fallback. Any other explicit value also fails closed to the fallback.
 
-`supports(int $abiVersion)` is the preferred check for the next adapter update. It returns `true` only when
-the requested ABI equals the installed ABI and PHP's runtime `PCRE_VERSION` exactly matches the Unicode tables committed
-with the extension. One method covers both conditions, so an adapter cannot accidentally omit either one. Matching the
-PCRE version also keeps the native lexer and yumemi.php's PCRE-based lexer from assigning different boundaries to the
-same Unicode identifier.
+`supports(int $abiVersion)` is the preferred check for the next adapter update. It returns `true` only when the
+requested ABI equals the installed ABI.
 
-`ABI_VERSION` and `isCompatible()` remain available for inspection. `isCompatible()` reports only the Unicode
-condition. The current yumemi.php adapter still checks them separately. After it moves to `supports()`, an older
-extension without that method will use the generated PHP parser.
+`ABI_VERSION` and `isCompatible()` remain available for the current adapter. `isCompatible()` always returns `true`
+because the extension no longer disables native parsing based on PHP's runtime PCRE version. After yumemi.php moves to
+`supports()`, an older extension without that method will use the generated PHP parser.
+
+## Unicode snapshot
+
+The native lexer uses committed Unicode classification tables generated from the PCRE version exposed as
+`NativeLexer::UNICODE_PCRE_VERSION`. That constant records the source of the tables. It is not a runtime compatibility
+requirement.
+
+yumemi.php's generated lexer classifies Unicode with the PCRE version loaded by PHP. A PCRE release with different
+Unicode data can therefore classify a newly added or reclassified code point differently from the native lexer. This
+can change token boundaries for rare identifiers that contain those code points. The extension accepts that edge case
+so native parsing remains available across normal PHP installations. Regenerating the committed tables is an
+intentional parser-compatibility change and requires differential testing against yumemi.php.
 
 ## Parser result
 
@@ -122,7 +131,7 @@ yumemi.php translates these values into its public parser-limit exception contra
 a machine-readable `type`, exact `text`, and zero-based half-open `start` and `end` byte offsets. Returned token types are
 `integer`, `superscript-integer`, `invalid-superscript`, `decimal-number`, `dot`,
 `mul`, `div`, `pow`, `sub`, `add`, `identifier`, `left-paren`, `right-paren`, `at`, and `invalid-number`. The lexer
-shares the parser's Unicode compatibility gate and resource limits.
+shares the parser's committed Unicode snapshot and resource limits.
 
 The lexer is not a second application API. yumemi.php selects `NativeParser`, not `NativeLexer`, for normal parsing.
 
