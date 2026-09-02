@@ -55,6 +55,8 @@ jobs:
   macos:
     if: >-
       ${{
+        (github.event_name == 'pull_request' &&
+          !startsWith(github.head_ref, 'windows/')) ||
         (github.event_name == 'push' &&
           (github.ref_name == 'develop' ||
             github.ref_name == 'master' ||
@@ -96,6 +98,8 @@ jobs:
   windows:
     if: >-
       ${{
+        (github.event_name == 'pull_request' &&
+          !startsWith(github.head_ref, 'darwin/')) ||
         (github.event_name == 'push' &&
           (github.ref_name == 'develop' ||
             github.ref_name == 'master' ||
