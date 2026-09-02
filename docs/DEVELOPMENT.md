@@ -98,6 +98,7 @@ its extension ref because it embeds that value in filenames and branch refs cont
 | `010-native-parser-failures.phpt` | Structured syntax failures and inherited lexer limits |
 | `011-native-error-metadata.phpt` | Machine-readable syntax and resource metadata |
 | `012-build-qualification.phpt` | Requested ZTS/debug modes in qualification builds |
+| `013-native-parser-adversarial.phpt` | Deterministic generated expressions, malformed bytes, AST invariants, and parser reset behavior |
 
 The build-mode test skips in normal NTS runs. Qualification builds pass the expected mode to the test.
 
