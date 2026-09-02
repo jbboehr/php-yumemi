@@ -100,8 +100,12 @@ its extension ref because it embeds that value in filenames and branch refs cont
 | `011-native-error-metadata.phpt` | Machine-readable syntax and resource metadata |
 | `012-build-qualification.phpt` | Requested ZTS/debug modes in qualification builds |
 | `013-native-parser-adversarial.phpt` | Deterministic generated expressions, malformed bytes, AST invariants, and parser reset behavior |
+| `014-phpt-result-policy.phpt` | CI result policy, including the single intentional qualification skip |
 
-The build-mode test skips in normal NTS runs. Qualification builds pass the expected mode to the test.
+The build-mode test skips in normal native CI runs. Qualification builds pass the expected mode to the test. Native CI
+records JUnit XML and the runner's status list for every matrix entry, then rejects any result other than passing tests
+and that one intentional skip. Each job uploads those reports; failed jobs also retain generated PHPT diff, expected,
+output, log, memory, and executable files.
 
 ## Repository layout
 
@@ -118,5 +122,6 @@ The build-mode test skips in normal NTS runs. Qualification builds pass the expe
 - `src/parser/native_parser.c` owns the arena AST, failures, and PHP parser interface.
 - `scripts/generate-lexer.sh` regenerates the scanner and Unicode tables.
 - `scripts/generate-parser.sh` regenerates the C parser.
+- `scripts/check-phpt-results.php` enforces the native CI pass/skip policy.
 - `Makefile.frag` supplies opt-in generated-source targets.
 - `tests/` contains the PHPT suite.
