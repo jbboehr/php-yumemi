@@ -46,6 +46,11 @@ $qualification = $tests . '/012-build-qualification.phpt';
 file_put_contents($results, "PASSED\t$pass\nSKIPPED\t$qualification\n");
 printResult('valid', runChecker($checker, $results, $tests));
 
+unlink($qualification);
+file_put_contents($results, "PASSED\t$pass\n");
+printResult('valid-without-intentional-skip', runChecker($checker, $results, $tests));
+file_put_contents($qualification, '');
+
 file_put_contents($results, "SKIPPED\t$pass\nSKIPPED\t$qualification\n");
 printResult('unexpected-skip', runChecker($checker, $results, $tests));
 
@@ -65,6 +70,12 @@ valid
 exit=0
 stdout:
 PHPT status policy passed: 2 tests, 1 intentional skip.
+stderr:
+
+valid-without-intentional-skip
+exit=0
+stdout:
+PHPT status policy passed: 1 tests, 0 intentional skips.
 stderr:
 
 unexpected-skip

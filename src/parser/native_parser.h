@@ -11,6 +11,7 @@
 #include <stddef.h>
 
 #include "main/php.h"
+#include "Zend/zend_arena.h"
 
 #include "native_lexer.h"
 
@@ -49,13 +50,10 @@ typedef struct yumemi_ast_node
     } value;
 } yumemi_ast_node;
 
-struct yumemi_parser_allocation;
-
 typedef struct
 {
-    struct yumemi_parser_allocation *allocations;
+    zend_arena *arena;
     yumemi_ast_node *root;
-    bool has_error;
     yumemi_lexer_location error_location;
     const char *error_message;
     const char *unexpected_token;

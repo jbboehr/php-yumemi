@@ -18,21 +18,11 @@
 #include "parser.h"
 #include "scanner.h"
 
-typedef struct yumemi_parser_allocation
-{
-    struct yumemi_parser_allocation *next;
-} yumemi_parser_allocation;
-
 static zend_class_entry *yumemi_native_parse_exception_class;
 
 static void *yumemi_parser_arena_alloc(yumemi_parse_context *context, size_t size)
 {
-    yumemi_parser_allocation *allocation = emalloc(sizeof(*allocation) + size);
-
-    allocation->next = context->allocations;
-    context->allocations = allocation;
-
-    return allocation + 1;
+    return zend_arena_alloc(&context->arena, size);
 }
 
 static char *yumemi_parser_arena_string(yumemi_parse_context *context, const char *text, size_t length)
@@ -48,19 +38,12 @@ static char *yumemi_parser_arena_string(yumemi_parse_context *context, const cha
 void yumemi_parse_context_init(yumemi_parse_context *context)
 {
     memset(context, 0, sizeof(*context));
+    context->arena = zend_arena_create(4096);
 }
 
 void yumemi_parse_context_destroy(yumemi_parse_context *context)
 {
-    yumemi_parser_allocation *allocation = context->allocations;
-
-    while (allocation != NULL) {
-        yumemi_parser_allocation *next = allocation->next;
-
-        efree(allocation);
-        allocation = next;
-    }
-
+    zend_arena_destroy(context->arena);
     memset(context, 0, sizeof(*context));
 }
 
@@ -68,11 +51,10 @@ void yumemi_parse_context_set_error(yumemi_parse_context *context,
                                     const yumemi_lexer_location *location,
                                     const char *message)
 {
-    if (context->has_error) {
+    if (context->error_message != NULL) {
         return;
     }
 
-    context->has_error = true;
     context->error_location = *location;
     context->error_message = yumemi_parser_arena_string(context, message, strlen(message));
 }
@@ -143,11 +125,10 @@ void yumemi_parse_context_set_syntax_error(yumemi_parse_context *context,
 {
     size_t index;
 
-    if (context->has_error) {
+    if (context->error_message != NULL) {
         return;
     }
 
-    context->has_error = true;
     context->error_location = *location;
     context->error_message =
         yumemi_parser_format_syntax_error(context, unexpected_token, expected_tokens, expected_token_count);
@@ -167,21 +148,31 @@ void yumemi_parse_context_set_syntax_error(yumemi_parse_context *context,
     }
 }
 
-yumemi_ast_node *yumemi_ast_make_leaf(yumemi_parse_context *context,
-                                      yumemi_ast_kind kind,
-                                      const char *text,
-                                      size_t length,
-                                      const yumemi_lexer_location *location)
+static yumemi_ast_node *yumemi_ast_make_owned_leaf(yumemi_parse_context *context,
+                                                   yumemi_ast_kind kind,
+                                                   const char *text,
+                                                   size_t length,
+                                                   const yumemi_lexer_location *location)
 {
     yumemi_ast_node *node = yumemi_parser_arena_alloc(context, sizeof(*node));
 
     node->kind = kind;
     node->has_location = location != NULL;
     node->location = location != NULL ? *location : (yumemi_lexer_location){ 0, 0 };
-    node->value.leaf.text = yumemi_parser_arena_string(context, text, length);
+    node->value.leaf.text = text;
     node->value.leaf.length = length;
 
     return node;
+}
+
+yumemi_ast_node *yumemi_ast_make_leaf(yumemi_parse_context *context,
+                                      yumemi_ast_kind kind,
+                                      const char *text,
+                                      size_t length,
+                                      const yumemi_lexer_location *location)
+{
+    return yumemi_ast_make_owned_leaf(
+        context, kind, yumemi_parser_arena_string(context, text, length), length, location);
 }
 
 yumemi_ast_node *yumemi_ast_make_binary(yumemi_parse_context *context,
@@ -249,7 +240,7 @@ yumemi_ast_node *yumemi_ast_make_superscript_integer(yumemi_parse_context *conte
     }
     ascii[output_length] = '\0';
 
-    return yumemi_ast_make_leaf(context, YUMEMI_AST_INTEGER, ascii, output_length, location);
+    return yumemi_ast_make_owned_leaf(context, YUMEMI_AST_INTEGER, ascii, output_length, location);
 }
 
 yumemi_ast_node *yumemi_ast_make_negation(yumemi_parse_context *context,
@@ -261,7 +252,7 @@ yumemi_ast_node *yumemi_ast_make_negation(yumemi_parse_context *context,
         size_t length = node->value.leaf.length;
 
         if (length > 0 && text[0] == '-') {
-            return yumemi_ast_make_leaf(context, node->kind, text + 1, length - 1, location);
+            return yumemi_ast_make_owned_leaf(context, node->kind, text + 1, length - 1, location);
         }
 
         char *negative = yumemi_parser_arena_alloc(context, length + 2);
@@ -269,7 +260,7 @@ yumemi_ast_node *yumemi_ast_make_negation(yumemi_parse_context *context,
         memcpy(negative + 1, text, length);
         negative[length + 1] = '\0';
 
-        return yumemi_ast_make_leaf(context, node->kind, negative, length + 1, location);
+        return yumemi_ast_make_owned_leaf(context, node->kind, negative, length + 1, location);
     }
 
     return yumemi_ast_make_binary(
@@ -337,8 +328,8 @@ static void yumemi_native_parser_throw_syntax_error(zend_string *input,
                                                     size_t fallback_offset)
 {
     const char *message = context->error_message != NULL ? context->error_message : "syntax error";
-    size_t start = context->has_error ? context->error_location.start : fallback_offset;
-    size_t end = context->has_error ? context->error_location.end : fallback_offset;
+    size_t start = context->error_message != NULL ? context->error_location.start : fallback_offset;
+    size_t end = context->error_message != NULL ? context->error_location.end : fallback_offset;
     zend_object *exception;
     zval expected;
     size_t index;
@@ -358,11 +349,7 @@ static void yumemi_native_parser_throw_syntax_error(zend_string *input,
                                     ZEND_STRL("unexpected"),
                                     context->unexpected_token);
     } else {
-        zval unexpected;
-
-        ZVAL_NULL(&unexpected);
-        zend_update_property(
-            yumemi_native_parse_exception_class, exception, ZEND_STRL("unexpected"), &unexpected);
+        zend_update_property_null(yumemi_native_parse_exception_class, exception, ZEND_STRL("unexpected"));
     }
 
     array_init_size(&expected, context->expected_token_count);
@@ -415,16 +402,13 @@ static PHP_METHOD(NativeParser, parse)
     Z_PARAM_STR(input)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (ZSTR_LEN(input) > YUMEMI_LEXER_INPUT_BYTES_LIMIT) {
-        lexer_context.error = (yumemi_lexer_error){
-            YUMEMI_LEXER_LIMIT_INPUT_BYTES, YUMEMI_LEXER_INPUT_BYTES_LIMIT, ZSTR_LEN(input), 0, ZSTR_LEN(input),
-        };
+    yumemi_lexer_context_init(&lexer_context, (const unsigned char *)ZSTR_VAL(input), ZSTR_LEN(input));
+    if (lexer_context.error.category != YUMEMI_LEXER_LIMIT_NONE) {
         yumemi_lexer_throw_limit(&lexer_context.error);
         RETURN_THROWS();
     }
 
     yumemi_parse_context_init(&parse_context);
-    yumemi_lexer_context_init(&lexer_context, (const unsigned char *)ZSTR_VAL(input), ZSTR_LEN(input));
 
     if (yumemi_lex_init_extra(&lexer_context, &scanner) != 0) {
         yumemi_parse_context_destroy(&parse_context);
@@ -451,7 +435,7 @@ static PHP_METHOD(NativeParser, parse)
         RETURN_THROWS();
     }
 
-    if (parse_result != 0 || parse_context.root == NULL || parse_context.has_error) {
+    if (parse_result != 0 || parse_context.root == NULL || parse_context.error_message != NULL) {
         yumemi_native_parser_throw_syntax_error(input, &parse_context, ZSTR_LEN(input));
         yumemi_parse_context_destroy(&parse_context);
         RETURN_THROWS();

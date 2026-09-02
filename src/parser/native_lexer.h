@@ -92,6 +92,7 @@ typedef struct
 
 bool yumemi_lexer_accept_token(yumemi_lexer_context *context, yumemi_token_type type, size_t start, size_t end);
 void yumemi_lexer_context_init(yumemi_lexer_context *context, const unsigned char *input, size_t length);
+size_t yumemi_lexer_classify_number(const unsigned char *text, size_t length, yumemi_token_type *type);
 size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t length, yumemi_token_type *type);
 const char *yumemi_lexer_token_name(yumemi_token_type type);
 const char *yumemi_lexer_limit_name(yumemi_lexer_limit limit);

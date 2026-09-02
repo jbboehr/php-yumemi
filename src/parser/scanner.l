@@ -91,27 +91,14 @@ unicode_chunk   {unicode_part}*{high_byte}{unicode_part}*
                 }
 
 {number}        {
-                    size_t dot_count = 0;
-                    size_t offset;
-                    bool has_uppercase_exponent;
+                    yumemi_token_type token_type;
 
-                    for (offset = 0; offset < (size_t)yyleng; ++offset) {
-                        if (yytext[offset] == '.') {
-                            ++dot_count;
-                        }
-                    }
-
-                    has_uppercase_exponent = memchr(yytext, 'E', (size_t)yyleng) != NULL;
-                    if (dot_count > 1) {
-                        YUMEMI_RETURN_TOKEN(
-                            has_uppercase_exponent ? YUMEMI_TOKEN_IDENTIFIER : YUMEMI_TOKEN_INVALID_NUMBER
-                        );
-                    }
-                    if (dot_count == 1 || memchr(yytext, 'e', (size_t)yyleng) != NULL ||
-                        memchr(yytext, 'E', (size_t)yyleng) != NULL) {
-                        YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_FLOAT);
-                    }
-                    YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_INTEGER);
+                    (void)yumemi_lexer_classify_number(
+                        (const unsigned char *)yytext,
+                        (size_t)yyleng,
+                        &token_type
+                    );
+                    YUMEMI_RETURN_TOKEN(token_type);
                 }
 
 {identifier}    { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_IDENTIFIER); }

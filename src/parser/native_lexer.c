@@ -107,6 +107,13 @@ void yumemi_lexer_context_init(yumemi_lexer_context *context, const unsigned cha
     size_t offset = 0;
 
     memset(context, 0, sizeof(*context));
+    if (length > YUMEMI_LEXER_INPUT_BYTES_LIMIT) {
+        context->error = (yumemi_lexer_error){
+            YUMEMI_LEXER_LIMIT_INPUT_BYTES, YUMEMI_LEXER_INPUT_BYTES_LIMIT, length, 0, length,
+        };
+        return;
+    }
+
     while (offset < length) {
         uint32_t code_point;
         size_t width;
@@ -166,7 +173,7 @@ static size_t yumemi_scan_digits(const unsigned char *text, size_t length, bool 
     return offset;
 }
 
-static size_t yumemi_scan_number(const unsigned char *text, size_t length, yumemi_token_type *type)
+size_t yumemi_lexer_classify_number(const unsigned char *text, size_t length, yumemi_token_type *type)
 {
     size_t offset;
     size_t digit_length;
@@ -315,7 +322,7 @@ size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t len
     }
 
     if (yumemi_unicode_is_decimal_digit(code_point)) {
-        return yumemi_scan_number(text, length, type);
+        return yumemi_lexer_classify_number(text, length, type);
     }
 
     if (yumemi_unicode_is_identifier(code_point)) {
@@ -501,15 +508,11 @@ static PHP_METHOD(NativeLexer, tokenize)
     Z_PARAM_STR(input)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (ZSTR_LEN(input) > YUMEMI_LEXER_INPUT_BYTES_LIMIT) {
-        context.error = (yumemi_lexer_error){
-            YUMEMI_LEXER_LIMIT_INPUT_BYTES, YUMEMI_LEXER_INPUT_BYTES_LIMIT, ZSTR_LEN(input), 0, ZSTR_LEN(input),
-        };
+    yumemi_lexer_context_init(&context, (const unsigned char *)ZSTR_VAL(input), ZSTR_LEN(input));
+    if (context.error.category != YUMEMI_LEXER_LIMIT_NONE) {
         yumemi_lexer_throw_limit(&context.error);
         RETURN_THROWS();
     }
-
-    yumemi_lexer_context_init(&context, (const unsigned char *)ZSTR_VAL(input), ZSTR_LEN(input));
 
     if (yumemi_lex_init_extra(&context, &scanner) != 0) {
         zend_throw_exception(spl_ce_RuntimeException, "Unable to initialize the Yumemi native lexer", 0);

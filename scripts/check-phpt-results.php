@@ -70,7 +70,10 @@ if ($errors !== []) {
     exit(1);
 }
 
+$skipCount = count(array_keys($expected, 'SKIPPED', true));
 printf(
-    "PHPT status policy passed: %d tests, 1 intentional skip.\n",
+    "PHPT status policy passed: %d tests, %d intentional skip%s.\n",
     count($expected),
+    $skipCount,
+    $skipCount === 1 ? '' : 's',
 );
