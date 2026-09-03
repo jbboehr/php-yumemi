@@ -1,6 +1,6 @@
 # Cross-repository work handoff
 
-Snapshot date: 2026-08-30
+Snapshot date: 2026-09-02
 
 This note tracks work shared by php-yumemi and [yumemi.php](https://github.com/jbboehr/yumemi.php). Design and
 maintenance details live in
@@ -9,10 +9,10 @@ maintenance details live in
 
 ## Repository state
 
-- php-yumemi behavior baseline:
-  [`5167edc`](https://github.com/jbboehr/php-yumemi/commit/5167edc5fa683fecb41c36fe3ef5af0735b0cbe1)
-- yumemi.php `develop` baseline, including native parsing, operator hardening, and receiver-independent multiplication:
-  [`a33c2ae`](https://github.com/jbboehr/yumemi.php/commit/a33c2ae423601b3c20cb3caac0ef41df8e6c5e32)
+- php-yumemi `develop` baseline:
+  [`bc241d6`](https://github.com/jbboehr/php-yumemi/commit/bc241d676aa736fc563df288e6053b67361dc9d0)
+- yumemi.php `develop` baseline, including atomic native-parser selection and native comparison diagnostics:
+  [`5e4798a`](https://github.com/jbboehr/yumemi.php/commit/5e4798a29af11e1b69ed3e773f99859df37e0b46)
 
 An ignored checkout may exist at `tmp/yumemi.php` as a local convenience. It is a separate Git repository: never add
 its files to php-yumemi, and use the remote branch and commit links above when handing work to someone who does not have
@@ -41,16 +41,18 @@ recover the source-level receiver.
 
 ## Verification snapshot
 
-The earlier php-yumemi baseline
-[`c326537`](https://github.com/jbboehr/php-yumemi/commit/c326537e7939bef490b4834cc0b733d6af8e189c)
-passed all 11 jobs in
-[GitHub Actions run 33235772245](https://github.com/jbboehr/php-yumemi/actions/runs/33235772245), including the Linux,
+The current php-yumemi baseline passed all 11 jobs in
+[GitHub Actions run 33597704663](https://github.com/jbboehr/php-yumemi/actions/runs/33597704663), including the Linux,
 macOS, and Windows matrices described in [Development](DEVELOPMENT.md#native-ci-matrix).
 
 During native-parser integration, 520 valid expressions and ten invalid expressions matched the generated PHP parser's
 ASTs and error spans. A later deterministic 30,000-input differential probe found no mismatches. Focused yumemi.php
-tests cover selection without autoloading, the ABI and legacy compatibility hooks, forced fallback, cache isolation,
-AST validation, exact lexemes, structured failures, previous-exception chaining, and fallback behavior.
+tests cover selection without autoloading, the atomic ABI check, forced fallback, cache isolation, AST validation, exact
+lexemes, structured failures, previous-exception chaining, and fallback behavior.
+
+A clean Linux rehearsal resolved php-yumemi `bc241d6` and yumemi.php `5e4798a` from Packagist, built the extension with
+PIE 1.4.10, satisfied an application-level `ext-yumemi` Composer requirement, and produced `1.5 meter` through both the
+native parser and the process-level PHP fallback.
 
 These results are a dated snapshot, not a replacement for running both repositories' current gates after a change.
 
@@ -65,24 +67,19 @@ The evaluated extension-only implementation is preserved on the remote php-yumem
 [`comparison/operators`](https://github.com/jbboehr/php-yumemi/tree/comparison/operators) at commit
 [`4e3f160`](https://github.com/jbboehr/php-yumemi/commit/4e3f160ec305fd034ca71407b1a78015d2193d15)
 for future reference, but it is not part of the current contract. Use yumemi.php's named comparison methods instead.
-Its `yumemi.invalidQuantityComparison` PHPStan diagnostic covers incompatible named method calls, not comparison
-operators. Without the native handler, PHP compares object state, which may disagree with the named methods even when
-two quantities are physically equivalent.
+Its `yumemi.nativeQuantityComparison` PHPStan diagnostic rejects non-strict comparison operators on quantities. Without
+the native handler, PHP compares object state, which may disagree with the named methods even when two quantities are
+physically equivalent.
 
-## Pending yumemi.php follow-up
+## Consumer integration state
 
-php-yumemi commit `5167edc` adds `NativeParser::supports(int $abiVersion)`. The current yumemi.php adapter still checks
-`ABI_VERSION` and `isCompatible()` separately. php-yumemi now keeps `isCompatible()` as an always-true legacy hook and
-uses its committed Unicode tables on every runtime. The next yumemi.php change should:
+The yumemi.php adapter calls `NativeParser::supports(1)` and falls back when the method is missing or returns `false`.
+php-yumemi keeps `ABI_VERSION` and `isCompatible()` for older adapters, and uses its committed Unicode tables on every
+runtime. yumemi.php also rejects native quantity comparisons in PHPStan and tells operator users to require
+`ext-yumemi` in application projects.
 
-- call `NativeParser::supports(1)` and fall back when the method is missing or returns `false`.
-- add an always-enabled PHPStan rule that rejects non-strict comparison operators on quantities while keeping `===` and
-  `!==` available for identity checks.
-- teach the opt-in operator model that unary `+` and `-` preserve the quantity's branded type.
-- tell applications that use operators to require `ext-yumemi` in their root Composer project.
-
-That work belongs in yumemi.php. It must keep the generated parser and method-based arithmetic working without the
-extension.
+One consumer-side item remains: teach the opt-in operator model that unary `+` and `-` preserve a quantity's branded
+type. That work belongs in yumemi.php and must not change runtime behavior without the extension.
 
 ## Release qualification
 
@@ -100,6 +97,7 @@ The initial policy decisions are recorded in [Release and compatibility policy](
 - each repository owns release notes for its own public boundary and cross-references the compatible counterpart when a
   coordinated interface changes.
 
-The PIE package is registered on Packagist with its development branches. Before the first tag, finish the yumemi.php
-follow-up above, choose compatible versions, run both release gates, and test a clean paired installation. PECL
-`package.xml` work is out of scope unless the project later chooses to publish through PECL.
+The PIE package is registered on Packagist with its development branches. Before the first tag, finish the remaining
+yumemi.php PHPStan item, choose compatible versions, run both release gates, and repeat the clean paired installation
+with those exact release candidates. PECL `package.xml` work is out of scope unless the project later chooses to publish
+through PECL.

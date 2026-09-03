@@ -50,8 +50,7 @@ other:
 
 - yumemi.php must continue to install and pass its primary tests without `ext-yumemi`.
 - the extension must not duplicate unit, conversion, registry, or arithmetic semantics.
-- yumemi.php selects native parsing only when the advertised parser ABI matches. `NativeParser::supports()` is the
-  preferred check for the coordinated adapter update.
+- yumemi.php selects native parsing only when `NativeParser::supports()` accepts the requested parser ABI.
 - applications should upgrade both packages together while the internal interfaces remain provisional.
 - a release note that changes an operator or parser interface must name the compatible release or commit in the other
   repository.

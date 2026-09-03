@@ -8,21 +8,20 @@ arrays or exceptions directly.
 The current ABI version is `1`, exposed as
 `jbboehr\Yumemi\Parser\NativeParser::ABI_VERSION`. A compatible yumemi.php adapter selects the native parser only when:
 
-1. `NativeParser` is already loaded, without triggering autoload.
-2. `ABI_VERSION === 1`.
-3. the legacy `NativeParser::isCompatible()` hook returns `true`.
-4. the process-level `YUMEMI_NATIVE_PARSER` setting permits native parsing.
+1. the process-level `YUMEMI_NATIVE_PARSER` setting permits native parsing.
+2. `NativeParser` is already loaded, without triggering autoload.
+3. `NativeParser::supports(1)` exists and returns `true`.
 
 If any check fails, yumemi.php uses the generated PHP parser. Native parsing is an optimization, not a dependency.
 The setting is case-insensitive: unset, `1`, `true`, `on`, and `yes` permit native selection, while `0`, `false`, `off`,
 `no`, and the empty string select the PHP fallback. Any other explicit value also fails closed to the fallback.
 
-`supports(int $abiVersion)` is the preferred check for the next adapter update. It returns `true` only when the
-requested ABI equals the installed ABI.
+`supports(int $abiVersion)` is the current atomic compatibility check. It returns `true` only when the requested ABI
+equals the installed ABI.
 
-`ABI_VERSION` and `isCompatible()` remain available for the current adapter. `isCompatible()` always returns `true`
-because the extension no longer disables native parsing based on PHP's runtime PCRE version. After yumemi.php moves to
-`supports()`, an older extension without that method will use the generated PHP parser.
+`ABI_VERSION` and `isCompatible()` remain available for older adapters. `isCompatible()` always returns `true` because
+the extension no longer disables native parsing based on PHP's runtime PCRE version. The current adapter sends an older
+extension without `supports()` to the generated PHP parser.
 
 ## Unicode snapshot
 
