@@ -268,6 +268,11 @@ size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t len
     uint32_t code_point;
     size_t width;
 
+    if (length == 0) {
+        *type = YUMEMI_TOKEN_IDENTIFIER;
+        return 0;
+    }
+
     if (!yumemi_utf8_decode(text, length, &code_point, &width)) {
         *type = YUMEMI_TOKEN_IDENTIFIER;
         return width;
