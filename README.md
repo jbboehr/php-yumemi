@@ -7,91 +7,52 @@
 [![License: AGPL-3.0-only WITH romic-exception](https://img.shields.io/badge/license-AGPL--3.0--only%20WITH%20romic--exception-blue.svg)](LICENSE.md)
 [![AI burn](https://img.shields.io/endpoint?url=https%3A%2F%2Fgist.githubusercontent.com%2Fjbboehr%2F82f2ceb23f4d50a491e05da7da08317e%2Fraw%2Fagent-badge.json&cacheSeconds=300)](https://github.com/arlegotin/agent-badge)
 
-Experimental native PHP extension for [yumemi.php](https://github.com/jbboehr/yumemi.php).
+php-yumemi is an experimental native PHP extension for
+[yumemi.php](https://github.com/jbboehr/yumemi.php). It adds arithmetic operator syntax to `Quantity` objects and an
+optional native unit-expression parser. yumemi.php continues to work without the extension.
 
-The extension adds two optional capabilities to the pure-PHP library:
+## Requirements
 
-- arithmetic operators for `Quantity` objects, forwarded to the existing public methods.
-- a native unit-expression parser, with automatic fallback to yumemi.php's generated PHP parser.
+- PHP 8.2 through 8.5.
+- Linux for installation through PIE. macOS and Windows are currently source-build targets, and no precompiled Windows
+  DLLs are published.
 
-yumemi.php still handles arithmetic, conversion, registries, and result construction. The extension does not contain a
-second unit engine, and portable library code does not have to depend on it.
+This project is an early experiment and does not have a stable release.
 
-The integration has not yet shipped in a tagged yumemi.php release. Until it does, the installation below uses the
-`develop` branch, which contains the internal quantity base and native-parser adapter.
+## Installation
 
-## Status and platforms
-
-This is an early experiment, not a supported release.
-
-The [release and compatibility policy](docs/RELEASE.md) lists the platforms planned for the first release, the internal
-interfaces shared with yumemi.php, and the checks required before tagging.
-
-| Environment | Source-build CI coverage | Distribution status |
-| --- | --- | --- |
-| x86_64 Linux | PHP 8.2–8.5 NTS, PHP 8.2/8.5 ZTS+debug, PHP 8.5 ASan/UBSan | Published PIE package target |
-| Intel macOS | PHP 8.2 | Source-build qualification only |
-| Apple Silicon macOS | PHP 8.5 | Source-build qualification only |
-| x64 Windows | PHP 8.2, 8.4, and 8.5 NTS, plus PHP 8.4 TS | Source-build qualification only, no DLL release yet |
-
-The Composer manifest limits PIE installation to Linux NTS and ZTS builds on PHP 8.2 through 8.5. The macOS and Windows
-jobs test source builds, but the project does not yet publish packages for those platforms.
-
-## Install and use
-
-Install the yumemi.php library in the application first:
+Install yumemi.php first:
 
 ```console
-composer require jbboehr/yumemi:dev-develop
+composer require jbboehr/yumemi
 ```
 
-Tagged yumemi.php v0.1.1 predates `InternalQuantity`, the parser adapter, and `yumemi-operators.neon`. It cannot provide
-the integration documented here.
-
-### Install the extension with PIE
-
-The extension is published on Packagist as
-[`jbboehr/php-yumemi`](https://packagist.org/packages/jbboehr/php-yumemi). On Linux, install it for the selected PHP
-installation with [PIE](https://github.com/php/pie):
+Install the extension with [PIE](https://github.com/php/pie):
 
 ```console
-pie install jbboehr/php-yumemi:dev-develop
+pie install jbboehr/php-yumemi
 ```
 
-Packagist currently has development branches but no tagged release. PIE can also build from a repository checkout:
+If more than one PHP installation is present, run PIE with the PHP binary or `php-config` for the installation that
+will load the extension.
 
-```console
-pie install
-```
-
-Use the PHP binary for the installation that will load the extension, or select it with `--with-php-config`. The PIE
-manifest accepts PHP 8.2 through 8.5 on Linux. This project targets PIE and does not include a PECL `package.xml`.
-
-### Load it before yumemi.php
-
-The extension must be loaded before Composer autoloads yumemi.php's `Quantity` class. A normal PIE installation enables
-the module for its target PHP installation. For a temporary source-build test, pass it on the PHP command line:
-
-```console
-php -d extension=/path/to/yumemi.so application.php
-```
-
-Confirm the active PHP installation sees the module with:
-
-```console
-php --ri yumemi
-```
-
-Applications that enable operator syntax should also record the runtime dependency in their root Composer project:
+Applications that depend on operator syntax should also record the runtime requirement:
 
 ```console
 composer require 'ext-yumemi:*'
 ```
 
-This command does not install the extension. It tells Composer to verify that the deployment PHP loads it. Reusable
-packages should not require `ext-yumemi`, because yumemi.php's methods and generated parser work without it.
+Reusable packages should not require `ext-yumemi`, because consumers can use yumemi.php without the extension.
 
-Once loaded, existing yumemi.php quantities gain operator syntax:
+The extension must load before Composer autoloads yumemi.php. Confirm that the active PHP installation sees it:
+
+```console
+php --ri yumemi
+```
+
+## Using quantity operators
+
+Existing yumemi.php quantities support arithmetic operators after the extension is loaded:
 
 ```php
 <?php
@@ -110,29 +71,9 @@ echo $total->exactDecimalValueIn('meter'), ' ', $total->unitToString(), PHP_EOL;
 // 1.5 meter
 ```
 
-Reusable libraries should continue to prefer `add()`, `sub()`, `mul()`, `div()`, `pow()`, and `rdiv()`, because those
-methods work whether or not an application installs the extension.
+The operators follow the corresponding public yumemi.php methods:
 
-### Enable PHPStan's operator model
-
-Runtime operators and PHPStan's operator model are configured separately. If the application configures yumemi.php
-manually, load the operator model after the main PHPStan extension:
-
-```neon
-includes:
-    - vendor/jbboehr/yumemi/extension.neon
-    - vendor/jbboehr/yumemi/yumemi-operators.neon
-```
-
-When `phpstan/extension-installer` already loads `extension.neon`, include only `yumemi-operators.neon` yourself.
-Including that file tells PHPStan that the analyzed application loads `ext-yumemi`. See yumemi.php's
-[Optional Quantity Operators][yumemi-operator-docs] documentation for accepted operands and inferred result types.
-
-## Operators
-
-For descendants of `jbboehr\Yumemi\InternalQuantity`, the extension delegates:
-
-| PHP syntax | Public method |
+| PHP syntax | Method |
 | --- | --- |
 | `$quantity + $other` | `$quantity->add($other)` |
 | `$quantity - $other` | `$quantity->sub($other)` |
@@ -143,101 +84,57 @@ For descendants of `jbboehr\Yumemi\InternalQuantity`, the extension delegates:
 | `+$quantity` | `$quantity->mul(1)` |
 | `-$quantity` | `$quantity->mul(-1)` |
 
-The method receives the other operand unchanged. It validates that operand and either returns a result or throws.
-Scalar multiplication works from either side. On the supported PHP versions, Zend lowers unary signs through
-multiplication, so they follow the same `mul()` contract. Binary scalar-left `+`, `-`, and `**` remain unsupported.
+Scalar multiplication works from either side. Scalar-left `+`, `-`, and `**` are not supported.
 
-PHP may reorder multiplication operands before invoking an internal object handler. The handler treats scalar
-multiplication as commutative. yumemi.php also defines quantity-by-quantity products independently of the receiver Zend
-chooses. Accepted products are canonical and retain the shared registry context. Rejected cross-context products expose
-the same failure from either order.
+Comparison operators are not overloaded. Use yumemi.php methods such as `compareTo()`, `equals()`, and `lessThan()` for
+quantity comparisons. The `===` and `!==` operators retain their normal PHP object-identity meaning.
 
-Comparison operators are not overloaded. PHP still accepts them and compares object state, which can disagree with
-quantity semantics even when two values use equivalent units. Zend has one callback for `==`, `!=`, `<`, `<=`, `>`,
-`>=`, `<=>`, and implicit comparisons in functions such as `sort()`, `min()`, and `max()`. The extension cannot replace
-explicit operator syntax without changing those functions too. Use yumemi.php methods such as `compareTo()`, `equals()`,
-and `lessThan()` instead. The strict identity operators `===` and `!==` keep their PHP object-identity meaning and cannot
-be overloaded.
+Library code can call `add()`, `sub()`, `mul()`, `div()`, `pow()`, and `rdiv()` directly when it needs to work with or
+without the extension.
 
-## Native parser selection
+## PHPStan
 
-The currently compatible yumemi.php `develop` branch selects the native parser automatically. Applications do not call
-`NativeLexer` or `NativeParser` directly. Its adapter makes the ABI decision with `NativeParser::supports(1)`. If the
-class is not already loaded, the method is missing, or the extension rejects ABI version 1, yumemi.php uses its
-generated PHP parser. `ABI_VERSION` and `isCompatible()` remain available for older adapters. The yumemi.php integration
-has not yet shipped in a tagged release.
+Runtime operators and PHPStan support are configured separately. If the application loads yumemi.php's PHPStan
+extension manually, include the operator model after it:
 
-Set `YUMEMI_NATIVE_PARSER` to `0`, `false`, `off`, `no`, or an empty string in the process environment to force the PHP
-parser without unloading the extension. Leave it unset, or set it to `1`, `true`, `on`, or `yes`, for automatic native
-selection. Values are case-insensitive. Any other value selects the PHP fallback. The generated parser continues to
-work on its own. Applications should upgrade yumemi.php and `ext-yumemi` together while the integration is experimental.
+```neon
+includes:
+    - vendor/jbboehr/yumemi/extension.neon
+    - vendor/jbboehr/yumemi/yumemi-operators.neon
+```
 
-The array schema, structured failure metadata, committed Unicode snapshot, and ABI contract are documented in
-[Native Parser ABI](docs/NATIVE_PARSER_ABI.md).
+When `phpstan/extension-installer` already loads `extension.neon`, include only `yumemi-operators.neon`. See
+[Optional Quantity Operators][yumemi-operator-docs] for supported operands and inferred result types.
 
-## Build from source
+## Native parser
 
-### Unix-like systems
+yumemi.php uses the native parser automatically when the extension is loaded and falls back to its PHP parser when the
+native parser is unavailable.
 
-A PHP development package, C compiler, Autoconf, and Make are required. Flex and Bison are not required for a normal
-build because their generated C sources are committed.
+Set `YUMEMI_NATIVE_PARSER=0` in the process environment to force the PHP parser without unloading the extension. The
+values `false`, `off`, `no`, and an empty string have the same effect. Leave the variable unset for automatic selection.
+
+Upgrade yumemi.php and `ext-yumemi` together while the native integration is experimental.
+
+## Building from source
+
+A PHP development package, C compiler, Autoconf, and Make are required. The generated lexer and parser sources are
+included, so a normal build does not require Flex or Bison.
 
 ```console
 phpize
 ./configure --enable-yumemi
 make -j4
-NO_INTERACTION=1 REPORT_EXIT_STATUS=1 make test
+make test
+make install
 ```
 
-Try the uninstalled module with the same PHP installation used to build it:
-
-```console
-php -d extension="$PWD/modules/yumemi.so" --ri yumemi
-```
-
-### Windows
-
-`config.w32` defines the Windows extension build. The qualified matrix uses
-[`php/php-windows-builder`](https://github.com/php/php-windows-builder) with PHP 8.2, 8.4, and 8.5 on x64. The exact
-configuration is in [CI](.github/workflows/ci.yml). The project does not yet publish precompiled DLLs, so Windows is a
-maintainer source-build target rather than a PIE installation target.
-
-### Nix development
-
-The flake provides packages, checks, and development shells for PHP 8.2 through 8.5. PHP 8.2 is the default:
-
-```console
-nix develop
-phpize
-./configure --enable-yumemi
-make -j4
-NO_INTERACTION=1 REPORT_EXIT_STATUS=1 make test
-```
-
-Select another PHP version with an attribute such as `nix develop .#php85` or `nix build .#php85`. Run the complete
-Linux build, PHPT, formatting, generated-source, sanitizer, ZTS/debug, and PIE packaging gate with:
-
-```console
-nix flake check --keep-going -L
-```
-
-Format supported files with `nix fmt`. With direnv installed, the checked-in `.envrc` enters the default shell
-automatically.
-
-## Maintainer documentation
-
-- [Architecture](docs/ARCHITECTURE.md) defines the extension/library boundary and operator handler contract.
-- [Native Parser ABI](docs/NATIVE_PARSER_ABI.md) records the internal neutral-AST and failure interface.
-- [Development](docs/DEVELOPMENT.md) covers generated sources, verification, CI, tests, and repository layout.
-- [Release and compatibility policy](docs/RELEASE.md) defines the initial support envelope and release procedure.
-- [Cross-repository handoff](docs/HANDOFF.md) records current yumemi.php integration and release-qualification state.
-- [Changelog](CHANGELOG.md) summarizes release-facing changes.
+After installation, add `extension=yumemi` to the appropriate `php.ini` and verify it with `php --ri yumemi`.
 
 ## License
 
 Project-authored code is licensed under `AGPL-3.0-only WITH romic-exception`. The native scanner and grammar contain
-portions derived from UDUNITS2 under the UCAR license, so the package expression is
-`(AGPL-3.0-only WITH romic-exception) AND UCAR`.
+portions derived from UDUNITS2 under the UCAR license.
 
 See [LICENSE.md](LICENSE.md), [docs/LICENSE_EXCEPTION.md](docs/LICENSE_EXCEPTION.md), and
 [docs/UDUNITS-COPYRIGHT](docs/UDUNITS-COPYRIGHT) for the complete terms and notices.
