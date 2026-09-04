@@ -15,6 +15,16 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    gitignore = {
+      url = "github:hercules-ci/gitignore.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    agent-badge = {
+      url = "github:jbboehr/agent-badge.ts/master";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.gitignore.follows = "gitignore";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -23,6 +33,7 @@
       nixpkgs,
       flake-utils,
       treefmt-nix,
+      agent-badge,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -247,6 +258,7 @@
           pkgs.mkShell {
             inputsFrom = [ packagesByPhp.${name} ];
             packages = [
+              agent-badge.packages.${system}.default
               pkgs.bison
               pkgs.clang-tools
               pkgs.flex

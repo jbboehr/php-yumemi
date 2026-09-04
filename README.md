@@ -1,4 +1,11 @@
+![php-yumemi — operator overloading for yumemi.php](docs/assets/banner.png)
+
 # php-yumemi
+
+[![Build](https://github.com/jbboehr/php-yumemi/actions/workflows/ci.yml/badge.svg)](https://github.com/jbboehr/php-yumemi/actions/workflows/ci.yml)
+[![Built with Nix](https://img.shields.io/badge/built%20with-Nix-5277C3?logo=nixos&logoColor=white)](flake.nix)
+[![License: AGPL-3.0-only WITH romic-exception](https://img.shields.io/badge/license-AGPL--3.0--only%20WITH%20romic--exception-blue.svg)](LICENSE.md)
+[![AI burn](https://img.shields.io/endpoint?url=https%3A%2F%2Fgist.githubusercontent.com%2Fjbboehr%2F82f2ceb23f4d50a491e05da7da08317e%2Fraw%2Fagent-badge.json&cacheSeconds=300)](https://github.com/arlegotin/agent-badge)
 
 Experimental native PHP extension for [yumemi.php](https://github.com/jbboehr/yumemi.php).
 
