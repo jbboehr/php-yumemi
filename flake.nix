@@ -78,6 +78,7 @@
                 "tmp"
                 "tmp-php.ini"
                 "tmp.md"
+                "vendor"
               ];
               ignoredSuffixes = [
                 "~"
@@ -262,6 +263,7 @@
               pkgs.bison
               pkgs.clang-tools
               pkgs.flex
+              php.packages.composer
             ];
 
             shellHook = ''

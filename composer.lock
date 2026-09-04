@@ -1,0 +1,72 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "c16bdf3823d4c21ddbbefb0119ff1645",
+    "packages": [],
+    "packages-dev": [
+        {
+            "name": "jbboehr/doctrine-of-the-second-sun",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jbboehr/doctrine-of-the-second-sun.git",
+                "reference": "afe53e8b8de73d323c72996412505d328708f920"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jbboehr/doctrine-of-the-second-sun/zipball/afe53e8b8de73d323c72996412505d328708f920",
+                "reference": "afe53e8b8de73d323c72996412505d328708f920",
+                "shasum": ""
+            },
+            "require-dev": {
+                "php-cs-fixer/shim": "^3.95",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^10.5 || ^11.5"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "DoctrineOfTheSecondSun\\PHPStan\\": "integrations/phpstan/src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "(CC-BY-SA-4.0 AND AGPL-3.0-only WITH romic-exception)"
+            ],
+            "authors": [
+                {
+                    "name": "John Boehr",
+                    "email": "jbboehr@mailbox.org"
+                }
+            ],
+            "description": "Portable literary, visual, coding, technical-writing, and software-stewardship guidance",
+            "keywords": [
+                "doctrine",
+                "documentation",
+                "software-maintenance",
+                "writing"
+            ],
+            "support": {
+                "issues": "https://github.com/jbboehr/doctrine-of-the-second-sun/issues",
+                "source": "https://github.com/jbboehr/doctrine-of-the-second-sun"
+            },
+            "time": "2026-08-31T00:18:20+00:00"
+        }
+    ],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "jbboehr/doctrine-of-the-second-sun": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=8.2 <8.6"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
+}

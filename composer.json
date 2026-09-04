@@ -30,5 +30,8 @@
                 "description": "Enable the yumemi extension"
             }
         ]
+    },
+    "require-dev": {
+        "jbboehr/doctrine-of-the-second-sun": "dev-master"
     }
 }

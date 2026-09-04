@@ -39,6 +39,7 @@ tests/**/*.sh
 tmp-php.ini
 tmp.md
 /tmp/
+/vendor/
 
 # agent-badge:gitignore:start
 .github/agent-badge/state.json
