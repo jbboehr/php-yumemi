@@ -34,6 +34,39 @@ final class ThrowingProbe extends \jbboehr\Yumemi\InternalQuantity
     }
 }
 
+final class PrivateDelegateProbe extends \jbboehr\Yumemi\InternalQuantity
+{
+    public static int $calls = 0;
+
+    private function add(mixed $right): int
+    {
+        ++self::$calls;
+        return 42;
+    }
+}
+
+final class ProtectedDelegateProbe extends \jbboehr\Yumemi\InternalQuantity
+{
+    public static int $calls = 0;
+
+    protected function add(mixed $right): int
+    {
+        ++self::$calls;
+        return 42;
+    }
+}
+
+final class StaticDelegateProbe extends \jbboehr\Yumemi\InternalQuantity
+{
+    public static int $calls = 0;
+
+    public static function add(mixed $right): int
+    {
+        ++self::$calls;
+        return 42;
+    }
+}
+
 function reportFailure(string $label, Closure $operation): void
 {
     try {
@@ -54,6 +87,10 @@ reportFailure('scalar-left-sub', fn () => 2 - new TypedProbe());
 reportFailure('invalid-rdiv-argument', fn () => [] / new TypedProbe());
 reportFailure('scalar-left-pow', fn () => 2 ** new TypedProbe());
 reportFailure('exception', fn () => new ThrowingProbe() + 2);
+reportFailure('private', fn () => new PrivateDelegateProbe() + 2);
+reportFailure('protected', fn () => new ProtectedDelegateProbe() + 2);
+reportFailure('static', fn () => new StaticDelegateProbe() + 2);
+var_dump(PrivateDelegateProbe::$calls, ProtectedDelegateProbe::$calls, StaticDelegateProbe::$calls);
 
 $scalar = 2;
 $probe = new TypedProbe();
@@ -81,6 +118,12 @@ scalar-left-sub:TypeError
 invalid-rdiv-argument:TypeError
 scalar-left-pow:TypeError
 exception:LogicException
+private:Error
+protected:Error
+static:Error
+int(0)
+int(0)
+int(0)
 quantity-left-mul:2
 literal-left-mul:2
 variable-left-mul:2

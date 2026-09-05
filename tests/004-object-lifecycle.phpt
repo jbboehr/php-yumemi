@@ -40,6 +40,28 @@ final class StatefulProbe extends \jbboehr\Yumemi\InternalQuantity
     }
 }
 
+final class LifecycleProbe extends \jbboehr\Yumemi\InternalQuantity
+{
+    public static ?WeakReference $lastClone = null;
+    public int $value = 1;
+    public bool $throwOnClone = false;
+
+    public function __clone(): void
+    {
+        self::$lastClone = WeakReference::create($this);
+        ++$this->value;
+
+        if ($this->throwOnClone) {
+            throw new LogicException('clone failure');
+        }
+    }
+
+    public function add(mixed $right): never
+    {
+        throw new LogicException('assignment failure');
+    }
+}
+
 $left = new StatefulProbe(2, 'meter');
 $original = $left;
 $right = new StatefulProbe(3, 'meter');
@@ -78,6 +100,33 @@ unset($cycle);
 gc_collect_cycles();
 
 var_dump($weakReference->get());
+
+$hookOriginal = new LifecycleProbe();
+$hookClone = clone $hookOriginal;
+
+echo 'clone-hook:', PHP_EOL;
+var_dump($hookClone !== $hookOriginal, $hookOriginal->value, $hookClone->value);
+
+$hookOriginal->throwOnClone = true;
+try {
+    clone $hookOriginal;
+    echo 'clone:no failure', PHP_EOL;
+} catch (LogicException $exception) {
+    echo 'clone:', $exception->getMessage(), PHP_EOL;
+}
+
+var_dump($hookOriginal->value, LifecycleProbe::$lastClone->get());
+
+$quantity = new LifecycleProbe();
+$weakQuantity = WeakReference::create($quantity);
+try {
+    $quantity += 1;
+    echo 'assignment:no failure', PHP_EOL;
+} catch (LogicException $exception) {
+    echo 'assignment:', $exception->getMessage(), PHP_EOL;
+}
+
+var_dump($quantity === $weakQuantity->get(), $quantity->value);
 ?>
 --EXPECT--
 bool(true)
@@ -97,3 +146,13 @@ string(7) "1/meter"
 int(5)
 string(7) "1/meter"
 NULL
+clone-hook:
+bool(true)
+int(1)
+int(2)
+clone:clone failure
+int(1)
+NULL
+assignment:assignment failure
+bool(true)
+int(1)
