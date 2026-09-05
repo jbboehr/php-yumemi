@@ -75,7 +75,8 @@ lowering and delegate to `mul(1)` and `mul(-1)`.
 Prepare releases on `develop`, merge the tested commit into `master`, and tag that exact `master` commit.
 
 1. Choose a version and complete `CHANGELOG.md`, including the compatible yumemi.php version or commit when an interface
-   changed.
+   changed. Set `PHP_YUMEMI_VERSION` in `php_yumemi.h` and `version` in `nix/derivation.nix` to the tag version without
+   its `v` prefix. Update the expected version string and its length in `tests/001-extension-loads.phpt` to match.
 2. Verify generated scanner and parser sources are current.
 3. Run the normal and strict source-build gates:
 
@@ -94,6 +95,25 @@ Prepare releases on `develop`, merge the tested commit into `master`, and tag th
    ```console
    nix flake check --keep-going -L
    ```
+
+   The Nix test gate compares each built module's version with its package metadata. Also compare the local module and
+   Nix metadata with the planned tag; matching development versions alone do not qualify a release. Set
+   `YUMEMI_RELEASE_VERSION` below to the intended tag without its `v` prefix:
+
+   ```sh
+   YUMEMI_RELEASE_VERSION=0.1.0
+   YUMEMI_PACKAGE_VERSION=$(nix eval --raw .#packages.x86_64-linux.php82.version) &&
+   php -n -d extension=modules/yumemi.so -r '
+       foreach (["module" => phpversion("yumemi"), "Nix package" => $argv[2]] as $source => $actual) {
+           if ($actual !== $argv[1]) {
+               fwrite(STDERR, "$source: expected {$argv[1]}, got " . var_export($actual, true) . PHP_EOL);
+               exit(1);
+           }
+       }
+   ' "$YUMEMI_RELEASE_VERSION" "$YUMEMI_PACKAGE_VERSION"
+   ```
+
+   Both commands must succeed. Use the PHP runtime that built `modules/yumemi.so`.
 
 5. Update yumemi.php's locked `php-yumemi` flake input to the release candidate and run its PHP 8.2–8.5 extension
    integration checks plus `nix flake check --keep-going -L`.

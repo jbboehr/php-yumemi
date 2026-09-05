@@ -73,6 +73,7 @@ nix flake check --keep-going -L
 It covers:
 
 - PHP 8.2, 8.3, 8.4, and 8.5 NTS builds and PHPTs.
+- agreement between each tested module's reported version and its Nix package metadata.
 - PHP 8.2 and 8.5 ZTS/debug endpoint builds.
 - a PHP 8.5 Clang ASan/UBSan build.
 - C and Nix formatting through treefmt-nix, plus Actionlint.

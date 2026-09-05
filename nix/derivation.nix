@@ -59,6 +59,13 @@ in
       REPORT_EXIT_STATUS=1 NO_INTERACTION=1 make test TEST_PHP_ARGS="-n -W phpt-results.txt" \
         || (find tests -name '*.log' -exec cat {} \; ; exit 1)
       php -n scripts/check-phpt-results.php phpt-results.txt tests${lib.optionalString requireQualification " --require-qualification"}
+      php -n -d extension="$PWD/modules/yumemi.so" -r '
+        $actual = phpversion("yumemi");
+        if ($actual !== $argv[1]) {
+            fwrite(STDERR, "Expected module version {$argv[1]}, loaded " . var_export($actual, true) . PHP_EOL);
+            exit(1);
+        }
+      ' "$version"
       runHook postCheck
     '';
   }
