@@ -102,10 +102,15 @@ its extension ref because it embeds that value in filenames and branch refs cont
 | `013-native-parser-adversarial.phpt` | Deterministic generated expressions, malformed bytes, AST invariants, and parser reset behavior |
 | `014-phpt-result-policy.phpt` | CI result policy, including the single intentional qualification skip |
 
-The build-mode test skips in normal native CI runs. Qualification builds pass the expected mode to the test. Native CI
-records JUnit XML and the runner's status list for every matrix entry, then rejects any result other than passing tests
-and that one intentional skip. Each job uploads those reports; failed jobs also retain generated PHPT diff, expected,
-output, log, memory, and executable files.
+The build-mode test skips in normal native CI runs. Qualification builds pass the expected mode to the test and
+require it to pass. Native CI records JUnit XML and the runner's status list for every matrix entry, then rejects any
+result other than passing tests and that one intentional skip. Each job uploads those reports; failed jobs also retain
+generated PHPT diff, expected, output, log, memory, and executable files.
+
+Nix builds also record and validate the runner's status list. Ordinary builds allow only the intentional qualification
+skip. ZTS/debug builds call `scripts/check-phpt-results.php RESULTS TESTS --require-qualification`, which requires
+every test to pass, including the qualification test. Nix declares that requirement separately from the test's
+environment variables, so accidentally omitting either variable cannot turn a qualification check into an accepted skip.
 
 ## Repository layout
 

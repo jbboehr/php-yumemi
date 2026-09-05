@@ -7,6 +7,7 @@
   php,
   src,
   checkSupport ? false,
+  requireQualification ? false,
 }:
 let
   romicException = {
@@ -55,8 +56,9 @@ in
   {
     checkPhase = ''
       runHook preCheck
-      REPORT_EXIT_STATUS=1 NO_INTERACTION=1 make test TEST_PHP_ARGS="-n" \
+      REPORT_EXIT_STATUS=1 NO_INTERACTION=1 make test TEST_PHP_ARGS="-n -W phpt-results.txt" \
         || (find tests -name '*.log' -exec cat {} \; ; exit 1)
+      php -n scripts/check-phpt-results.php phpt-results.txt tests${lib.optionalString requireQualification " --require-qualification"}
       runHook postCheck
     '';
   }

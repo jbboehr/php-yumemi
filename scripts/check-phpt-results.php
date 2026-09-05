@@ -9,10 +9,12 @@
 
 declare(strict_types=1);
 
-if ($argc !== 3) {
-    fwrite(STDERR, "Usage: check-phpt-results.php RESULTS TESTS\n");
+if ($argc < 3 || $argc > 4 || ($argc === 4 && $argv[3] !== '--require-qualification')) {
+    fwrite(STDERR, "Usage: check-phpt-results.php RESULTS TESTS [--require-qualification]\n");
     exit(1);
 }
+
+$requireQualification = $argc === 4;
 
 $resultLines = @file($argv[1], FILE_IGNORE_NEW_LINES);
 if ($resultLines === false) {
@@ -29,7 +31,11 @@ if ($testFiles === false || $testFiles === []) {
 $expected = [];
 foreach ($testFiles as $testFile) {
     $name = basename($testFile);
-    $expected[$name] = $name === '012-build-qualification.phpt' ? 'SKIPPED' : 'PASSED';
+    $expected[$name] = $name === '012-build-qualification.phpt' && !$requireQualification ? 'SKIPPED' : 'PASSED';
+}
+if ($requireQualification && !isset($expected['012-build-qualification.phpt'])) {
+    fwrite(STDERR, "Cannot find build qualification test.\n");
+    exit(1);
 }
 
 $actual = [];

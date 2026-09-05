@@ -118,11 +118,13 @@
             buildPecl ? php.buildPecl,
             php,
             checkSupport ? false,
+            requireQualification ? false,
           }:
           pkgs.callPackage ./nix/derivation.nix {
             inherit
               buildPecl
               checkSupport
+              requireQualification
               php
               src
               ;
@@ -154,6 +156,7 @@
             (makePackage {
               inherit php;
               checkSupport = true;
+              requireQualification = true;
             }).overrideAttrs
               {
                 pname = "yumemi-${name}-zts-debug";
