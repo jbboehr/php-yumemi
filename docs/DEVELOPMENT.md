@@ -151,7 +151,8 @@ environment variables, so accidentally omitting either variable cannot turn a qu
 - `src/parser/native_lexer.c` owns Unicode classification, limits, and the PHP lexer interface.
 - `src/parser/parser.y` defines the pure reentrant Bison grammar.
 - `src/parser/parser_types.h` defines shared value and location types for the scanner and parser.
-- `src/parser/native_parser.c` owns the arena AST, failures, and PHP parser interface.
+- `src/parser/parser_context.c` owns the parse arena, AST construction, and diagnostic storage.
+- `src/parser/native_parser.c` owns the PHP parser interface, array AST conversion, and exception translation.
 - `scripts/generate-lexer.sh` regenerates the scanner and Unicode tables.
 - `scripts/generate-parser.sh` regenerates the C parser.
 - `scripts/check-phpt-results.php` enforces the native CI pass/skip policy.
