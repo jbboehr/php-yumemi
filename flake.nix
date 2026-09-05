@@ -110,6 +110,22 @@
         treefmt = treefmt-nix.lib.evalModule pkgs {
           projectRootFile = "flake.nix";
           programs.actionlint.enable = pkgs.stdenv.hostPlatform.isLinux;
+          programs.clang-format = {
+            enable = true;
+            package = pkgs.llvmPackages_21.clang-tools;
+            includes = [
+              "php_yumemi.h"
+              "src/*.c"
+              "src/*.h"
+            ];
+            excludes = [
+              "src/parser/parser.c"
+              "src/parser/parser.h"
+              "src/parser/scanner.c"
+              "src/parser/scanner.h"
+              "src/parser/unicode_ranges.h"
+            ];
+          };
           programs.nixfmt.enable = true;
         };
 
@@ -264,7 +280,7 @@
             packages = [
               agent-badge.packages.${system}.default
               pkgs.bison
-              pkgs.clang-tools
+              pkgs.llvmPackages_21.clang-tools
               pkgs.flex
               php.packages.composer
             ];

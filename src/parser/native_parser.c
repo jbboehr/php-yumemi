@@ -92,10 +92,10 @@ static char *yumemi_parser_format_syntax_error(yumemi_parse_context *context,
 
     message = yumemi_parser_arena_alloc(context, length + 1);
     cursor = message;
-#define YUMEMI_APPEND_LITERAL(literal)                                                                \
-    do {                                                                                              \
-        memcpy(cursor, (literal), sizeof(literal) - 1);                                               \
-        cursor += sizeof(literal) - 1;                                                                \
+#define YUMEMI_APPEND_LITERAL(literal)                                                                                 \
+    do {                                                                                                               \
+        memcpy(cursor, (literal), sizeof(literal) - 1);                                                                \
+        cursor += sizeof(literal) - 1;                                                                                 \
     } while (0)
     YUMEMI_APPEND_LITERAL(syntax_error);
     YUMEMI_APPEND_LITERAL(unexpected_prefix);
@@ -133,8 +133,7 @@ void yumemi_parse_context_set_syntax_error(yumemi_parse_context *context,
     context->error_message =
         yumemi_parser_format_syntax_error(context, unexpected_token, expected_tokens, expected_token_count);
     if (unexpected_token != NULL) {
-        context->unexpected_token =
-            yumemi_parser_arena_string(context, unexpected_token, strlen(unexpected_token));
+        context->unexpected_token = yumemi_parser_arena_string(context, unexpected_token, strlen(unexpected_token));
     }
     if (expected_token_count == 0) {
         return;
@@ -344,10 +343,8 @@ static void yumemi_native_parser_throw_syntax_error(zend_string *input,
     zend_update_property_long(yumemi_native_parse_exception_class, exception, ZEND_STRL("start"), (zend_long)start);
     zend_update_property_long(yumemi_native_parse_exception_class, exception, ZEND_STRL("end"), (zend_long)end);
     if (context->unexpected_token != NULL) {
-        zend_update_property_string(yumemi_native_parse_exception_class,
-                                    exception,
-                                    ZEND_STRL("unexpected"),
-                                    context->unexpected_token);
+        zend_update_property_string(
+            yumemi_native_parse_exception_class, exception, ZEND_STRL("unexpected"), context->unexpected_token);
     } else {
         zend_update_property_null(yumemi_native_parse_exception_class, exception, ZEND_STRL("unexpected"));
     }
@@ -371,7 +368,7 @@ static PHP_METHOD(NativeParser, isCompatible)
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_parser_supports, 0, 1, _IS_BOOL, 0)
-ZEND_ARG_TYPE_INFO(0, abiVersion, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, abiVersion, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
 static PHP_METHOD(NativeParser, supports)
@@ -379,14 +376,14 @@ static PHP_METHOD(NativeParser, supports)
     zend_long abi_version;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-    Z_PARAM_LONG(abi_version)
+        Z_PARAM_LONG(abi_version)
     ZEND_PARSE_PARAMETERS_END();
 
     RETURN_BOOL(abi_version == YUMEMI_NATIVE_PARSER_ABI_VERSION);
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_native_parser_parse, 0, 1, IS_ARRAY, 0)
-ZEND_ARG_TYPE_INFO(0, input, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, input, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
 static PHP_METHOD(NativeParser, parse)
@@ -399,7 +396,7 @@ static PHP_METHOD(NativeParser, parse)
     int parse_result;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-    Z_PARAM_STR(input)
+        Z_PARAM_STR(input)
     ZEND_PARSE_PARAMETERS_END();
 
     yumemi_lexer_context_init(&lexer_context, (const unsigned char *)ZSTR_VAL(input), ZSTR_LEN(input));
@@ -445,11 +442,15 @@ static PHP_METHOD(NativeParser, parse)
     yumemi_parse_context_destroy(&parse_context);
 }
 
+/* PHP_ME includes the initializer comma; keep one entry per line. */
+/* clang-format off */
 static const zend_function_entry yumemi_native_parser_methods[] = {
     PHP_ME(NativeParser, isCompatible, arginfo_native_parser_is_compatible, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-        PHP_ME(NativeParser, supports, arginfo_native_parser_supports, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-        PHP_ME(NativeParser, parse, arginfo_native_parser_parse, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC) PHP_FE_END
+    PHP_ME(NativeParser, supports, arginfo_native_parser_supports, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(NativeParser, parse, arginfo_native_parser_parse, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_FE_END
 };
+/* clang-format on */
 
 zend_result yumemi_register_native_parser(void)
 {

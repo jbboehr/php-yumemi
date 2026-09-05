@@ -25,6 +25,23 @@ NO_INTERACTION=1 REPORT_EXIT_STATUS=1 make test
 Use the same PHP build to load the resulting module. A module compiled for NTS, ZTS, or a different PHP module API will
 not load safely into another runtime.
 
+## Formatting
+
+Run `nix fmt` to format authored C sources, headers, and Nix files. To check formatting without changing the working
+tree, run:
+
+```console
+nix build .#checks.x86_64-linux.formatting --no-link -L
+```
+
+The C formatter uses Clang Format 21 from the locked Nixpkgs input, also provided in each development shell. Its scope
+is `php_yumemi.h` and C sources and headers under `src/`. Generated `src/parser/parser.c`, `parser.h`, `scanner.c`,
+`scanner.h`, and `unicode_ranges.h` are excluded and retain their separate generation checks.
+
+The `.clang-format` configuration recognizes Zend argument-info and parameter-parsing blocks. Method tables keep one
+`PHP_ME` entry per line inside narrow `clang-format off` / `on` regions because the macros supply their own initializer
+commas.
+
 ## Generated lexer and parser
 
 The repository commits Flex and Bison output, so source builds and release archives do not require either tool.
@@ -58,7 +75,7 @@ It covers:
 - PHP 8.2, 8.3, 8.4, and 8.5 NTS builds and PHPTs.
 - PHP 8.2 and 8.5 ZTS/debug endpoint builds.
 - a PHP 8.5 Clang ASan/UBSan build.
-- treefmt-nix formatting and Actionlint.
+- C and Nix formatting through treefmt-nix, plus Actionlint.
 - committed Flex/Bison output.
 - Composer manifest validation.
 - a clean PHP 8.2 PIE build and module load without Flex or Bison.

@@ -18,4 +18,7 @@ AttributeMacros:
 StatementMacros:
   - ZEND_TSRMLS_CACHE_DEFINE
   - ZEND_MOD_END
+# Zend argument-info, parameter-parsing, globals, and INI macros delimit blocks without braces.
+MacroBlockBegin: '^(ZEND_BEGIN_ARG.*|ZEND_PARSE_PARAMETERS_START(_EX)?|ZEND_BEGIN_MODULE_GLOBALS|PHP_INI_BEGIN|ZEND_INI_BEGIN)$'
+MacroBlockEnd: '^(ZEND_END_ARG_INFO|ZEND_PARSE_PARAMETERS_END(_EX)?|ZEND_END_MODULE_GLOBALS|PHP_INI_END|ZEND_INI_END)$'
 ...
