@@ -13,7 +13,7 @@
 #include "main/php.h"
 #include "Zend/zend_arena.h"
 
-#include "native_lexer.h"
+#include "parser_types.h"
 
 #define YUMEMI_NATIVE_PARSER_ABI_VERSION 1
 
@@ -50,7 +50,7 @@ typedef struct yumemi_ast_node
     } value;
 } yumemi_ast_node;
 
-typedef struct
+struct yumemi_parse_context
 {
     zend_arena *arena;
     yumemi_ast_node *root;
@@ -59,7 +59,7 @@ typedef struct
     const char *unexpected_token;
     const char **expected_tokens;
     size_t expected_token_count;
-} yumemi_parse_context;
+};
 
 void yumemi_parse_context_init(yumemi_parse_context *context);
 void yumemi_parse_context_destroy(yumemi_parse_context *context);

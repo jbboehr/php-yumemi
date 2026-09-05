@@ -54,7 +54,7 @@
         yylval->length = (size_t)yyleng;                                                               \
         yylval->node = NULL;                                                                           \
         if (!yumemi_lexer_accept_token(yyextra, (token_type), yylloc->start, yylloc->end)) {          \
-            return YUMEMI_TOKEN_ERROR;                                                                 \
+            return YUMEMI_PARSER_error;                                                                \
         }                                                                                               \
         return (token_type);                                                                           \
     } while (0)
@@ -72,7 +72,7 @@ unicode_chunk   {unicode_part}*{high_byte}{unicode_part}*
 
 %%
 
-<INVALID_UTF8>(.|\n)+ { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_IDENTIFIER); }
+<INVALID_UTF8>(.|\n)+ { YUMEMI_RETURN_TOKEN(T_IDENTIFIER); }
 
 {ascii_space}+  { /* Whitespace does not consume the token budget. */ }
 
@@ -85,7 +85,7 @@ unicode_chunk   {unicode_part}*{high_byte}{unicode_part}*
                     );
 
                     YUMEMI_TRIM_TOKEN(token_length);
-                    if (token_type != YUMEMI_TOKEN_SKIP) {
+                    if (token_type != T_SKIP) {
                         YUMEMI_RETURN_TOKEN(token_type);
                     }
                 }
@@ -101,22 +101,22 @@ unicode_chunk   {unicode_part}*{high_byte}{unicode_part}*
                     YUMEMI_RETURN_TOKEN(token_type);
                 }
 
-{identifier}    { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_IDENTIFIER); }
-"."             { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_DOT); }
-"*"             { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_MUL); }
-"/"             { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_DIV); }
-"^"             { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_POW); }
-"-"             { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_SUB); }
-"+"             { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_ADD); }
-"("             { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_LEFT_PAREN); }
-")"             { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_RIGHT_PAREN); }
-"@"             { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_AT); }
-.               { YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_IDENTIFIER); }
+{identifier}    { YUMEMI_RETURN_TOKEN(T_IDENTIFIER); }
+"."             { YUMEMI_RETURN_TOKEN(T_DOT); }
+"*"             { YUMEMI_RETURN_TOKEN(T_MUL); }
+"/"             { YUMEMI_RETURN_TOKEN(T_DIV); }
+"^"             { YUMEMI_RETURN_TOKEN(T_POW); }
+"-"             { YUMEMI_RETURN_TOKEN(T_SUB); }
+"+"             { YUMEMI_RETURN_TOKEN(T_ADD); }
+"("             { YUMEMI_RETURN_TOKEN(T_LEFT_PAREN); }
+")"             { YUMEMI_RETURN_TOKEN(T_RIGHT_PAREN); }
+"@"             { YUMEMI_RETURN_TOKEN(T_AT); }
+.               { YUMEMI_RETURN_TOKEN(T_IDENTIFIER); }
 
 <<EOF>>         {
                     yylloc->start = yyextra->offset;
                     yylloc->end = yyextra->offset;
-                    return YUMEMI_TOKEN_EOF;
+                    return YUMEMI_PARSER_EOF;
                 }
 
 %%

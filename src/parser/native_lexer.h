@@ -13,32 +13,14 @@
 
 #include "main/php.h"
 
+#include "parser.h"
+
 #define YUMEMI_LEXER_INPUT_BYTES_LIMIT 4096
 #define YUMEMI_LEXER_TOKEN_COUNT_LIMIT 256
 #define YUMEMI_LEXER_NESTING_DEPTH_LIMIT 64
 #define YUMEMI_LEXER_TOKEN_BYTES_LIMIT 1024
 
-typedef enum
-{
-    YUMEMI_TOKEN_ERROR = -1,
-    YUMEMI_TOKEN_SKIP = -2,
-    YUMEMI_TOKEN_EOF = 0,
-    YUMEMI_TOKEN_INTEGER = 258,
-    YUMEMI_TOKEN_SUPERSCRIPT_INTEGER = 259,
-    YUMEMI_TOKEN_INVALID_SUPERSCRIPT = 260,
-    YUMEMI_TOKEN_FLOAT = 261,
-    YUMEMI_TOKEN_DOT = 262,
-    YUMEMI_TOKEN_MUL = 263,
-    YUMEMI_TOKEN_DIV = 264,
-    YUMEMI_TOKEN_POW = 265,
-    YUMEMI_TOKEN_SUB = 266,
-    YUMEMI_TOKEN_ADD = 267,
-    YUMEMI_TOKEN_IDENTIFIER = 268,
-    YUMEMI_TOKEN_LEFT_PAREN = 269,
-    YUMEMI_TOKEN_RIGHT_PAREN = 270,
-    YUMEMI_TOKEN_AT = 271,
-    YUMEMI_TOKEN_INVALID_NUMBER = 272,
-} yumemi_token_type;
+typedef yumemi_parser_token_kind_t yumemi_token_type;
 
 typedef enum
 {
@@ -48,21 +30,6 @@ typedef enum
     YUMEMI_LEXER_LIMIT_NESTING_DEPTH,
     YUMEMI_LEXER_LIMIT_TOKEN_BYTES,
 } yumemi_lexer_limit;
-
-struct yumemi_ast_node;
-
-typedef struct
-{
-    const char *text;
-    size_t length;
-    struct yumemi_ast_node *node;
-} yumemi_lexer_value;
-
-typedef struct
-{
-    size_t start;
-    size_t end;
-} yumemi_lexer_location;
 
 typedef struct
 {

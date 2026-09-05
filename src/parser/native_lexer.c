@@ -215,13 +215,13 @@ size_t yumemi_lexer_classify_number(const unsigned char *text, size_t length, yu
     }
 
     if (!ascii_only) {
-        *type = YUMEMI_TOKEN_IDENTIFIER;
+        *type = T_IDENTIFIER;
     } else if (dot_count > 1) {
-        *type = has_uppercase_exponent ? YUMEMI_TOKEN_IDENTIFIER : YUMEMI_TOKEN_INVALID_NUMBER;
+        *type = has_uppercase_exponent ? T_IDENTIFIER : T_INVALID_NUMBER;
     } else if (dot_count == 1 || has_exponent) {
-        *type = YUMEMI_TOKEN_FLOAT;
+        *type = T_FLOAT;
     } else {
-        *type = YUMEMI_TOKEN_INTEGER;
+        *type = T_INTEGER;
     }
 
     return offset;
@@ -240,15 +240,15 @@ bool yumemi_lexer_accept_token(yumemi_lexer_context *context, yumemi_token_type 
     }
 
     if (token_length > YUMEMI_LEXER_TOKEN_BYTES_LIMIT &&
-        (type == YUMEMI_TOKEN_IDENTIFIER || type == YUMEMI_TOKEN_INTEGER || type == YUMEMI_TOKEN_FLOAT ||
-         type == YUMEMI_TOKEN_SUPERSCRIPT_INTEGER || type == YUMEMI_TOKEN_INVALID_NUMBER)) {
+        (type == T_IDENTIFIER || type == T_INTEGER || type == T_FLOAT || type == T_SUPERSCRIPT_INTEGER ||
+         type == T_INVALID_NUMBER)) {
         context->error = (yumemi_lexer_error){
             YUMEMI_LEXER_LIMIT_TOKEN_BYTES, YUMEMI_LEXER_TOKEN_BYTES_LIMIT, token_length, start, end,
         };
         return false;
     }
 
-    if (type == YUMEMI_TOKEN_LEFT_PAREN) {
+    if (type == T_LEFT_PAREN) {
         ++context->nesting_depth;
         if (context->nesting_depth > YUMEMI_LEXER_NESTING_DEPTH_LIMIT) {
             context->error = (yumemi_lexer_error){
@@ -256,7 +256,7 @@ bool yumemi_lexer_accept_token(yumemi_lexer_context *context, yumemi_token_type 
             };
             return false;
         }
-    } else if (type == YUMEMI_TOKEN_RIGHT_PAREN && context->nesting_depth > 0) {
+    } else if (type == T_RIGHT_PAREN && context->nesting_depth > 0) {
         --context->nesting_depth;
     }
 
@@ -269,42 +269,42 @@ size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t len
     size_t width;
 
     if (length == 0) {
-        *type = YUMEMI_TOKEN_IDENTIFIER;
+        *type = T_IDENTIFIER;
         return 0;
     }
 
     if (!yumemi_utf8_decode(text, length, &code_point, &width)) {
-        *type = YUMEMI_TOKEN_IDENTIFIER;
+        *type = T_IDENTIFIER;
         return width;
     }
 
     switch (code_point) {
         case '.':
-            *type = YUMEMI_TOKEN_DOT;
+            *type = T_DOT;
             return width;
         case '*':
-            *type = YUMEMI_TOKEN_MUL;
+            *type = T_MUL;
             return width;
         case '/':
-            *type = YUMEMI_TOKEN_DIV;
+            *type = T_DIV;
             return width;
         case '^':
-            *type = YUMEMI_TOKEN_POW;
+            *type = T_POW;
             return width;
         case '-':
-            *type = YUMEMI_TOKEN_SUB;
+            *type = T_SUB;
             return width;
         case '+':
-            *type = YUMEMI_TOKEN_ADD;
+            *type = T_ADD;
             return width;
         case '(':
-            *type = YUMEMI_TOKEN_LEFT_PAREN;
+            *type = T_LEFT_PAREN;
             return width;
         case ')':
-            *type = YUMEMI_TOKEN_RIGHT_PAREN;
+            *type = T_RIGHT_PAREN;
             return width;
         case '@':
-            *type = YUMEMI_TOKEN_AT;
+            *type = T_AT;
             return width;
     }
 
@@ -322,7 +322,7 @@ size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t len
             offset += next_width;
         }
 
-        *type = YUMEMI_TOKEN_SKIP;
+        *type = T_SKIP;
         return offset;
     }
 
@@ -331,12 +331,12 @@ size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t len
     }
 
     if (yumemi_unicode_is_identifier(code_point)) {
-        *type = YUMEMI_TOKEN_IDENTIFIER;
+        *type = T_IDENTIFIER;
         return yumemi_scan_identifier(text, length);
     }
 
     if (code_point == 0x00b7) {
-        *type = YUMEMI_TOKEN_MUL;
+        *type = T_MUL;
         return width;
     }
 
@@ -347,7 +347,7 @@ size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t len
 
         if (offset >= length || !yumemi_utf8_decode(text + offset, length - offset, &next_code_point, &next_width) ||
             !yumemi_unicode_is_superscript_digit(next_code_point)) {
-            *type = YUMEMI_TOKEN_INVALID_SUPERSCRIPT;
+            *type = T_INVALID_SUPERSCRIPT;
             return width;
         }
 
@@ -357,7 +357,7 @@ size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t len
             offset += next_width;
         }
 
-        *type = YUMEMI_TOKEN_SUPERSCRIPT_INTEGER;
+        *type = T_SUPERSCRIPT_INTEGER;
         return offset;
     }
 
@@ -375,46 +375,46 @@ size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t len
             offset += next_width;
         }
 
-        *type = YUMEMI_TOKEN_SUPERSCRIPT_INTEGER;
+        *type = T_SUPERSCRIPT_INTEGER;
         return offset;
     }
 
-    *type = YUMEMI_TOKEN_IDENTIFIER;
+    *type = T_IDENTIFIER;
     return width;
 }
 
 const char *yumemi_lexer_token_name(yumemi_token_type type)
 {
     switch (type) {
-        case YUMEMI_TOKEN_INTEGER:
+        case T_INTEGER:
             return "integer";
-        case YUMEMI_TOKEN_SUPERSCRIPT_INTEGER:
+        case T_SUPERSCRIPT_INTEGER:
             return "superscript-integer";
-        case YUMEMI_TOKEN_INVALID_SUPERSCRIPT:
+        case T_INVALID_SUPERSCRIPT:
             return "invalid-superscript";
-        case YUMEMI_TOKEN_FLOAT:
+        case T_FLOAT:
             return "decimal-number";
-        case YUMEMI_TOKEN_DOT:
+        case T_DOT:
             return "dot";
-        case YUMEMI_TOKEN_MUL:
+        case T_MUL:
             return "mul";
-        case YUMEMI_TOKEN_DIV:
+        case T_DIV:
             return "div";
-        case YUMEMI_TOKEN_POW:
+        case T_POW:
             return "pow";
-        case YUMEMI_TOKEN_SUB:
+        case T_SUB:
             return "sub";
-        case YUMEMI_TOKEN_ADD:
+        case T_ADD:
             return "add";
-        case YUMEMI_TOKEN_IDENTIFIER:
+        case T_IDENTIFIER:
             return "identifier";
-        case YUMEMI_TOKEN_LEFT_PAREN:
+        case T_LEFT_PAREN:
             return "left-paren";
-        case YUMEMI_TOKEN_RIGHT_PAREN:
+        case T_RIGHT_PAREN:
             return "right-paren";
-        case YUMEMI_TOKEN_AT:
+        case T_AT:
             return "at";
-        case YUMEMI_TOKEN_INVALID_NUMBER:
+        case T_INVALID_NUMBER:
             return "invalid-number";
         default:
             return "unknown";
@@ -531,7 +531,7 @@ static PHP_METHOD(NativeLexer, tokenize)
 
     array_init(return_value);
 
-    while ((token = yumemi_lex(&value, &location, scanner)) > YUMEMI_TOKEN_EOF) {
+    while ((token = yumemi_lex(&value, &location, scanner)) != YUMEMI_PARSER_EOF && token != YUMEMI_PARSER_error) {
         zval token_data;
 
         array_init_size(&token_data, 4);
@@ -545,7 +545,7 @@ static PHP_METHOD(NativeLexer, tokenize)
     yumemi__delete_buffer(buffer, scanner);
     yumemi_lex_destroy(scanner);
 
-    if (token == YUMEMI_TOKEN_ERROR) {
+    if (token == YUMEMI_PARSER_error) {
         yumemi_lexer_throw_limit(&context.error);
         RETURN_THROWS();
     }

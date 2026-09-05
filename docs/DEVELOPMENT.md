@@ -62,6 +62,13 @@ Individual targets are:
 Lexer generation also rebuilds the committed Unicode classification tables from pinned Unicode data. The generated
 source checks fail if the maintainer tools produce files that differ from the committed copies.
 
+`parser.y` declares the token IDs. The scanner and lexer helpers use those declarations through Bison's generated
+`parser.h`. Shared value and location types live in `parser_types.h`, so the generated header does not depend on PHP
+registration or AST implementation details.
+
+The lexer uses the generated token enum, including a scanner-only `T_SKIP` value for discarded whitespace. `T_SKIP`
+never reaches the parser. Lexer failures return Bison's built-in error token; callers report the recorded limit error.
+
 ## Nix gate
 
 The flake provides PHP 8.2 through 8.5 packages and development shells. Run the complete x86_64 Linux gate with:
@@ -142,6 +149,7 @@ environment variables, so accidentally omitting either variable cannot turn a qu
 - `src/parser/scanner.l` defines the reentrant Flex scanner.
 - `src/parser/native_lexer.c` owns Unicode classification, limits, and the PHP lexer interface.
 - `src/parser/parser.y` defines the pure reentrant Bison grammar.
+- `src/parser/parser_types.h` defines shared value and location types for the scanner and parser.
 - `src/parser/native_parser.c` owns the arena AST, failures, and PHP parser interface.
 - `scripts/generate-lexer.sh` regenerates the scanner and Unicode tables.
 - `scripts/generate-parser.sh` regenerates the C parser.

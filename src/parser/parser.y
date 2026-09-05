@@ -31,7 +31,7 @@
 }
 
 %code requires {
-#include "native_parser.h"
+#include "parser_types.h"
 }
 
 %code {
@@ -77,6 +77,9 @@ static void yumemi_parser_error(yumemi_lexer_location *location,
 %token T_RIGHT_PAREN 270 ")"
 %token T_AT 271 "@"
 %token T_INVALID_NUMBER 272 "malformed number"
+
+/* Scanner-only result, consumed before tokens reach the parser. */
+%token T_SKIP
 
 %%
 

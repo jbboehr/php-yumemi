@@ -150,17 +150,18 @@ enum yysymbol_kind_t
   YYSYMBOL_T_RIGHT_PAREN = 15,             /* ")"  */
   YYSYMBOL_T_AT = 16,                      /* "@"  */
   YYSYMBOL_T_INVALID_NUMBER = 17,          /* "malformed number"  */
-  YYSYMBOL_YYACCEPT = 18,                  /* $accept  */
-  YYSYMBOL_start = 19,                     /* start  */
-  YYSYMBOL_exp = 20,                       /* exp  */
-  YYSYMBOL_additive_exp = 21,              /* additive_exp  */
-  YYSYMBOL_product_exp = 22,               /* product_exp  */
-  YYSYMBOL_unary_exp = 23,                 /* unary_exp  */
-  YYSYMBOL_power_exp = 24,                 /* power_exp  */
-  YYSYMBOL_simple = 25,                    /* simple  */
-  YYSYMBOL_number = 26,                    /* number  */
-  YYSYMBOL_signed_number = 27,             /* signed_number  */
-  YYSYMBOL_identifier = 28                 /* identifier  */
+  YYSYMBOL_T_SKIP = 18,                    /* T_SKIP  */
+  YYSYMBOL_YYACCEPT = 19,                  /* $accept  */
+  YYSYMBOL_start = 20,                     /* start  */
+  YYSYMBOL_exp = 21,                       /* exp  */
+  YYSYMBOL_additive_exp = 22,              /* additive_exp  */
+  YYSYMBOL_product_exp = 23,               /* product_exp  */
+  YYSYMBOL_unary_exp = 24,                 /* unary_exp  */
+  YYSYMBOL_power_exp = 25,                 /* power_exp  */
+  YYSYMBOL_simple = 26,                    /* simple  */
+  YYSYMBOL_number = 27,                    /* number  */
+  YYSYMBOL_signed_number = 28,             /* signed_number  */
+  YYSYMBOL_identifier = 29                 /* identifier  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -487,7 +488,7 @@ union yyalloc
 #define YYLAST   36
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  18
+#define YYNTOKENS  19
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  11
 /* YYNRULES -- Number of rules.  */
@@ -496,7 +497,7 @@ union yyalloc
 #define YYNSTATES  38
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   273
+#define YYMAXUTOK   274
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -537,16 +538,16 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,     2
+      15,    16,    17,     2,    18
 };
 
 #if YUMEMI_PARSER_DEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    84,    84,    88,    92,    93,    94,    98,    99,   100,
-     101,   102,   106,   107,   111,   112,   116,   117,   118,   119,
-     120,   124,   125,   129,   130,   134
+       0,    87,    87,    91,    95,    96,    97,   101,   102,   103,
+     104,   105,   109,   110,   114,   115,   119,   120,   121,   122,
+     123,   127,   128,   132,   133,   137
 };
 #endif
 
@@ -566,9 +567,9 @@ yysymbol_name (yysymbol_kind_t yysymbol)
   "end of file", "error", "invalid token", "integer",
   "superscript integer", "superscript sign without digits",
   "decimal number", ".", "*", "/", "^", "-", "+", "identifier", "(", ")",
-  "@", "malformed number", "$accept", "start", "exp", "additive_exp",
-  "product_exp", "unary_exp", "power_exp", "simple", "number",
-  "signed_number", "identifier", YY_NULLPTR
+  "@", "malformed number", "T_SKIP", "$accept", "start", "exp",
+  "additive_exp", "product_exp", "unary_exp", "power_exp", "simple",
+  "number", "signed_number", "identifier", YY_NULLPTR
   };
   return yy_sname[yysymbol];
 }
@@ -642,18 +643,18 @@ static const yytype_int8 yycheck[] =
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     3,     6,    11,    13,    14,    19,    20,    21,    22,
-      23,    24,    25,    26,    28,    23,    20,     0,    11,    12,
-       7,     8,     9,    24,     4,    10,    16,    15,    22,    22,
-      23,    23,    23,    23,    11,    26,    27,    26
+       0,     3,     6,    11,    13,    14,    20,    21,    22,    23,
+      24,    25,    26,    27,    29,    24,    21,     0,    11,    12,
+       7,     8,     9,    25,     4,    10,    16,    15,    23,    23,
+      24,    24,    24,    24,    11,    27,    28,    27
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    18,    19,    20,    21,    21,    21,    22,    22,    22,
-      22,    22,    23,    23,    24,    24,    25,    25,    25,    25,
-      25,    26,    26,    27,    27,    28
+       0,    19,    20,    21,    22,    22,    22,    23,    23,    23,
+      23,    23,    24,    24,    25,    25,    26,    26,    26,    26,
+      26,    27,    27,    28,    28,    29
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */

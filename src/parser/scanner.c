@@ -868,7 +868,7 @@ static const flex_int16_t yy_chk[77] =
         yylval->length = (size_t)yyleng;                                                               \
         yylval->node = NULL;                                                                           \
         if (!yumemi_lexer_accept_token(yyextra, (token_type), yylloc->start, yylloc->end)) {          \
-            return YUMEMI_TOKEN_ERROR;                                                                 \
+            return YUMEMI_PARSER_error;                                                                \
         }                                                                                               \
         return (token_type);                                                                           \
     } while (0)
@@ -1336,7 +1336,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_IDENTIFIER); }
+{ YUMEMI_RETURN_TOKEN(T_IDENTIFIER); }
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
@@ -1354,7 +1354,7 @@ YY_RULE_SETUP
                     );
 
                     YUMEMI_TRIM_TOKEN(token_length);
-                    if (token_type != YUMEMI_TOKEN_SKIP) {
+                    if (token_type != T_SKIP) {
                         YUMEMI_RETURN_TOKEN(token_type);
                     }
                 }
@@ -1374,54 +1374,54 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_IDENTIFIER); }
+{ YUMEMI_RETURN_TOKEN(T_IDENTIFIER); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_DOT); }
+{ YUMEMI_RETURN_TOKEN(T_DOT); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_MUL); }
+{ YUMEMI_RETURN_TOKEN(T_MUL); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_DIV); }
+{ YUMEMI_RETURN_TOKEN(T_DIV); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_POW); }
+{ YUMEMI_RETURN_TOKEN(T_POW); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_SUB); }
+{ YUMEMI_RETURN_TOKEN(T_SUB); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_ADD); }
+{ YUMEMI_RETURN_TOKEN(T_ADD); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_LEFT_PAREN); }
+{ YUMEMI_RETURN_TOKEN(T_LEFT_PAREN); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_RIGHT_PAREN); }
+{ YUMEMI_RETURN_TOKEN(T_RIGHT_PAREN); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_AT); }
+{ YUMEMI_RETURN_TOKEN(T_AT); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-{ YUMEMI_RETURN_TOKEN(YUMEMI_TOKEN_IDENTIFIER); }
+{ YUMEMI_RETURN_TOKEN(T_IDENTIFIER); }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(INVALID_UTF8):
 {
                     yylloc->start = yyextra->offset;
                     yylloc->end = yyextra->offset;
-                    return YUMEMI_TOKEN_EOF;
+                    return YUMEMI_PARSER_EOF;
                 }
 	YY_BREAK
 case 16:

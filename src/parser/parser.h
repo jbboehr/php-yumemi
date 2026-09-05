@@ -54,7 +54,7 @@ extern int yumemi_parser_debug;
 #endif
 /* "%code requires" blocks.  */
 
-#include "native_parser.h"
+#include "parser_types.h"
 
 
 /* Token kinds.  */
@@ -80,7 +80,8 @@ extern int yumemi_parser_debug;
     T_LEFT_PAREN = 269,            /* "("  */
     T_RIGHT_PAREN = 270,           /* ")"  */
     T_AT = 271,                    /* "@"  */
-    T_INVALID_NUMBER = 272         /* "malformed number"  */
+    T_INVALID_NUMBER = 272,        /* "malformed number"  */
+    T_SKIP = 274                   /* T_SKIP  */
   };
   typedef enum yumemi_parser_tokentype yumemi_parser_token_kind_t;
 #endif
