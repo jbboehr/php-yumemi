@@ -35,6 +35,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Include all valid continuations in native parser expected-token metadata by enabling Bison lookahead correction.
+  This changes public syntax-error wording. Pair it with yumemi.php
+  [`c78d2df`](https://github.com/jbboehr/yumemi.php/commit/c78d2df22ccb7b1ca72d51944282b54afa6673fe).
 - Initialize Zend's thread-local cache for each request so dynamic ZTS builds can safely use operator dispatch and the
   native parser.
 - Prevent normal source and release-archive builds from invoking implicit Flex or Bison regeneration based on file

@@ -106,6 +106,11 @@ public readonly metadata:
 The exception message includes Bison's diagnostic and the byte span. Consumers should translate the structured
 properties instead of parsing the message.
 
+Expected tokens account for pending reductions through Bison lookahead correction. For example, `(meter` can continue
+with `*`, `/`, or another identifier as well as `)`. The message omits the expected-token clause when more than four
+tokens are possible; the `expected` property retains the full list. Corrections to these lists and diagnostic wording
+do not change ABI 1's property types or source-span contract.
+
 These labels are not parser AST `kind` values or native-lexer `type` values. They use the grammar's display names, such
 as `decimal number`, `end of file`, and `superscript sign without digits`, plus literal punctuation such as `(` or `)`.
 

@@ -80,16 +80,48 @@ $syntaxFailures = [
         6,
         6,
         'end of file',
-        [')'],
-        'syntax error, unexpected end of file, expecting ) at bytes 6..6',
+        ['integer', 'superscript integer', 'decimal number', '.', '*', '/', '^', '-', '+', 'identifier', '(', ')', '@'],
+        'syntax error, unexpected end of file at bytes 6..6',
     ],
     'invalid-token-name' => [
         'meter ⁺',
         6,
         9,
         'superscript sign without digits',
-        ['end of file'],
-        'syntax error, unexpected superscript sign without digits, expecting end of file at bytes 6..9',
+        ['end of file', 'integer', 'superscript integer', 'decimal number', '.', '*', '/', '^', '-', '+', 'identifier', '(', '@'],
+        'syntax error, unexpected superscript sign without digits at bytes 6..9',
+    ],
+    'number-excludes-offset' => [
+        '1 )',
+        2,
+        3,
+        ')',
+        ['end of file', 'integer', 'superscript integer', 'decimal number', '.', '*', '/', '^', '-', '+', 'identifier', '('],
+        'syntax error, unexpected ) at bytes 2..3',
+    ],
+    'superscript-excludes-offset' => [
+        'meter² )',
+        8,
+        9,
+        ')',
+        ['end of file', 'integer', 'superscript integer', 'decimal number', '.', '*', '/', '^', '-', '+', 'identifier', '('],
+        'syntax error, unexpected ) at bytes 8..9',
+    ],
+    'closed-group-excludes-offset' => [
+        '(meter) )',
+        8,
+        9,
+        ')',
+        ['end of file', 'integer', 'superscript integer', 'decimal number', '.', '*', '/', '^', '-', '+', 'identifier', '('],
+        'syntax error, unexpected ) at bytes 8..9',
+    ],
+    'maximum-unfinished-nesting' => [
+        str_repeat('(', 64) . 'meter',
+        69,
+        69,
+        'end of file',
+        ['integer', 'superscript integer', 'decimal number', '.', '*', '/', '^', '-', '+', 'identifier', '(', ')', '@'],
+        'syntax error, unexpected end of file at bytes 69..69',
     ],
 ];
 
@@ -184,6 +216,10 @@ unexpected-token:structured:message-compatible
 end-of-input:structured:message-compatible
 group-end-of-input:structured:message-compatible
 invalid-token-name:structured:message-compatible
+number-excludes-offset:structured:message-compatible
+superscript-excludes-offset:structured:message-compatible
+closed-group-excludes-offset:structured:message-compatible
+maximum-unfinished-nesting:structured:message-compatible
 syntax-metadata:readonly
 syntax-expected-metadata:readonly
 syntax-object-isolation:isolated

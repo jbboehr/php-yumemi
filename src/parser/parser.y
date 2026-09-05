@@ -55,6 +55,7 @@ static void yumemi_parser_error(yumemi_lexer_location *location,
 %define api.value.type {yumemi_lexer_value}
 %define api.location.type {yumemi_lexer_location}
 %define parse.error custom
+%define parse.lac full
 %locations
 
 %parse-param {void *scanner}
