@@ -12,6 +12,7 @@
 
 #include "main/php.h"
 #include "Zend/zend_exceptions.h"
+#include "Zend/zend_smart_str.h"
 #include "ext/spl/spl_exceptions.h"
 
 #include "native_parser.h"
@@ -64,55 +65,28 @@ static char *yumemi_parser_format_syntax_error(yumemi_parse_context *context,
                                                const char *const *expected_tokens,
                                                size_t expected_token_count)
 {
-    static const char syntax_error[] = "syntax error";
-    static const char unexpected_prefix[] = ", unexpected ";
-    static const char expecting_prefix[] = ", expecting ";
-    static const char alternative_separator[] = " or ";
-    /* Preserve Bison's prior detailed-message behavior: one of its five arguments was the unexpected token. */
-    bool include_expected = expected_token_count <= 4;
-    size_t length = sizeof(syntax_error) - 1;
+    smart_str buffer = { 0 };
     size_t index;
     char *message;
-    char *cursor;
 
-    if (unexpected_token == NULL) {
-        return yumemi_parser_arena_string(context, syntax_error, length);
-    }
-
-    length += sizeof(unexpected_prefix) - 1 + strlen(unexpected_token);
-    if (include_expected && expected_token_count > 0) {
-        length += sizeof(expecting_prefix) - 1;
-        for (index = 0; index < expected_token_count; ++index) {
-            if (index > 0) {
-                length += sizeof(alternative_separator) - 1;
+    smart_str_appends(&buffer, "syntax error");
+    if (unexpected_token != NULL) {
+        smart_str_appends(&buffer, ", unexpected ");
+        smart_str_appends(&buffer, unexpected_token);
+        /* Preserve Bison's prior detailed-message behavior: one of its five arguments was the unexpected token. */
+        if (expected_token_count > 0 && expected_token_count <= 4) {
+            smart_str_appends(&buffer, ", expecting ");
+            for (index = 0; index < expected_token_count; ++index) {
+                if (index > 0) {
+                    smart_str_appends(&buffer, " or ");
+                }
+                smart_str_appends(&buffer, expected_tokens[index]);
             }
-            length += strlen(expected_tokens[index]);
         }
     }
 
-    message = yumemi_parser_arena_alloc(context, length + 1);
-    cursor = message;
-#define YUMEMI_APPEND_LITERAL(literal)                                                                                 \
-    do {                                                                                                               \
-        memcpy(cursor, (literal), sizeof(literal) - 1);                                                                \
-        cursor += sizeof(literal) - 1;                                                                                 \
-    } while (0)
-    YUMEMI_APPEND_LITERAL(syntax_error);
-    YUMEMI_APPEND_LITERAL(unexpected_prefix);
-    memcpy(cursor, unexpected_token, strlen(unexpected_token));
-    cursor += strlen(unexpected_token);
-    if (include_expected && expected_token_count > 0) {
-        YUMEMI_APPEND_LITERAL(expecting_prefix);
-        for (index = 0; index < expected_token_count; ++index) {
-            if (index > 0) {
-                YUMEMI_APPEND_LITERAL(alternative_separator);
-            }
-            memcpy(cursor, expected_tokens[index], strlen(expected_tokens[index]));
-            cursor += strlen(expected_tokens[index]);
-        }
-    }
-#undef YUMEMI_APPEND_LITERAL
-    *cursor = '\0';
+    message = yumemi_parser_arena_string(context, ZSTR_VAL(buffer.s), ZSTR_LEN(buffer.s));
+    smart_str_free(&buffer);
 
     return message;
 }

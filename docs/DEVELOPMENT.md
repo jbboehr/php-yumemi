@@ -126,6 +126,7 @@ its extension ref because it embeds that value in filenames and branch refs cont
 | `012-build-qualification.phpt` | Requested ZTS/debug modes in qualification builds |
 | `013-native-parser-adversarial.phpt` | Deterministic generated expressions, malformed bytes, AST invariants, and parser reset behavior |
 | `014-phpt-result-policy.phpt` | CI result policy, including the single intentional qualification skip |
+| `015-native-parser-format-memory.phpt` | Zend-managed formatting memory is released across repeated syntax failures |
 
 The build-mode test skips in normal native CI runs. Qualification builds pass the expected mode to the test and
 require it to pass. Native CI records JUnit XML and the runner's status list for every matrix entry, then rejects any
