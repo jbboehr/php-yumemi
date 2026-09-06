@@ -10,7 +10,7 @@
 #include "main/php.h"
 
 #define PHP_YUMEMI_NAME "yumemi"
-#define PHP_YUMEMI_VERSION "0.1.0-dev"
+#define PHP_YUMEMI_VERSION "0.1.0"
 #define PHP_YUMEMI_AUTHORS "John Boehr <jbboehr@gmail.com> (lead)"
 
 extern zend_module_entry yumemi_module_entry;

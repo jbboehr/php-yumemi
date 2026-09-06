@@ -14,10 +14,11 @@ optional native unit-expression parser. yumemi.php continues to work without the
 ## Requirements
 
 - PHP 8.2 through 8.5.
-- Linux for installation through PIE. macOS and Windows are currently source-build targets, and no precompiled Windows
-  DLLs are published.
+- GMP for the yumemi.php runtime.
+- x86_64 Linux for installation through PIE. macOS and Windows are best-effort source-build targets, and no precompiled
+  Windows DLLs are published.
 
-This project is an early experiment and does not have a stable release.
+Version 0.1.0 is the initial release. The native integration remains provisional.
 
 ## Installation
 
@@ -139,4 +140,4 @@ portions derived from UDUNITS2 under the UCAR license.
 See [LICENSE.md](LICENSE.md), [docs/LICENSE_EXCEPTION.md](docs/LICENSE_EXCEPTION.md), and
 [docs/UDUNITS-COPYRIGHT](docs/UDUNITS-COPYRIGHT) for the complete terms and notices.
 
-[yumemi-operator-docs]: https://github.com/jbboehr/yumemi.php/blob/develop/docs/pages/reference/phpstan.md#optional-quantity-operators
+[yumemi-operator-docs]: https://github.com/jbboehr/yumemi.php/blob/e89eb4cf975e4b4752c5ed06ad9b220b438c0006/docs/pages/reference/phpstan.md#optional-quantity-operators
