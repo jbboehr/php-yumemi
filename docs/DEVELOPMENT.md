@@ -144,6 +144,7 @@ environment variables, so accidentally omitting either variable cannot turn a qu
 - `config.w32` defines the Windows build.
 - `composer.json` defines the PIE extension package and Linux install envelope.
 - `nix/derivation.nix` packages the extension for the flake's PHP versions.
+- `nix/checks.nix` defines the Nix verification checks and their platform conditions.
 - `php_yumemi.h` contains module metadata.
 - `src/extension.c` registers the module and `phpinfo()` output.
 - `src/internal_quantity.c` registers the quantity base and operator handler.
