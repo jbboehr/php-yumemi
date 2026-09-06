@@ -148,7 +148,8 @@ environment variables, so accidentally omitting either variable cannot turn a qu
 - `src/extension.c` registers the module and `phpinfo()` output.
 - `src/internal_quantity.c` registers the quantity base and operator handler.
 - `src/parser/scanner.l` defines the reentrant Flex scanner.
-- `src/parser/native_lexer.c` owns Unicode classification, limits, and the PHP lexer interface.
+- `src/parser/lexer_context.c` owns Unicode classification, token and limit bookkeeping, and Unicode snapshot metadata.
+- `src/parser/native_lexer.c` owns the PHP lexer interface and limit-exception translation.
 - `src/parser/parser.y` defines the pure reentrant Bison grammar.
 - `src/parser/parser_types.h` defines shared value and location types for the scanner and parser.
 - `src/parser/parser_context.c` owns the parse arena, AST construction, and diagnostic storage.

@@ -63,6 +63,7 @@ size_t yumemi_lexer_classify_number(const unsigned char *text, size_t length, yu
 size_t yumemi_lexer_classify_unicode_chunk(const unsigned char *text, size_t length, yumemi_token_type *type);
 const char *yumemi_lexer_token_name(yumemi_token_type type);
 const char *yumemi_lexer_limit_name(yumemi_lexer_limit limit);
+const char *yumemi_lexer_unicode_pcre_version(void);
 void yumemi_declare_readonly_property(zend_class_entry *class_entry,
                                       const char *name,
                                       size_t name_length,
