@@ -252,32 +252,6 @@ jobs:
             build/**/tests/**/*.sh
           if-no-files-found: ignore
 
-  release:
-    name: Publish release packages
-    needs: [test, macos, windows, nix]
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download release packages
-        uses: actions/download-artifact@v8
-        with:
-          pattern: php_yumemi-*.zip
-          path: artifacts
-          merge-multiple: true
-      - name: Publish the release with binary packages
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --notes ""
-          fi
-          gh release upload "$RELEASE_TAG" artifacts/php_yumemi-*.zip --clobber
-          gh release edit "$RELEASE_TAG" --draft=false
-
   nix-matrix:
     if: >-
       ${{

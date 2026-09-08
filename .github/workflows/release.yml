@@ -1,0 +1,76 @@
+name: release
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Publish release packages
+    if: >-
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        startsWith(github.event.workflow_run.head_branch, 'v')
+      }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.event.workflow_run.head_branch }}
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Download tested release packages
+        uses: actions/download-artifact@v8
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: php_yumemi-*.zip
+          path: artifacts
+          merge-multiple: true
+      - name: Verify and publish release packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.workflow_run.head_branch }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          tag_ref=$(jq -rn --arg tag "$RELEASE_TAG" '"refs/tags/" + $tag | @uri')
+          tag_sha=$(gh api "repos/$GH_REPO/commits/$tag_ref" --jq .sha)
+          if [ "$tag_sha" != "$RELEASE_SHA" ]; then
+            echo "Tag $RELEASE_TAG no longer points to the tested commit." >&2
+            exit 1
+          fi
+
+          packages=()
+          for version in 8.2 8.3 8.4 8.5; do
+            case "$version" in
+              8.2|8.3) compiler=vs16 ;;
+              *) compiler=vs17 ;;
+            esac
+            for ts in nts ts; do
+              packages+=("artifacts/php_yumemi-${RELEASE_TAG}-${version}-${ts}-${compiler}-x86_64.zip")
+            done
+            for ts in nts zts; do
+              packages+=("artifacts/php_yumemi-${RELEASE_TAG}_php${version}-arm64-darwin-bsdlibc-${ts}.zip")
+            done
+          done
+          for package in "${packages[@]}"; do
+            if [ ! -f "$package" ]; then
+              echo "Missing release package: $package" >&2
+              exit 1
+            fi
+          done
+
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --notes ""
+          fi
+          gh release upload "$RELEASE_TAG" "${packages[@]}" --clobber
+          gh release edit "$RELEASE_TAG" --draft=false
