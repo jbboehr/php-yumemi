@@ -19,20 +19,12 @@ permissions:
 
 jobs:
   test:
-    if: >-
-      ${{
-        !startsWith(github.head_ref || github.ref_name, 'darwin/') &&
-        !startsWith(github.head_ref || github.ref_name, 'windows/')
-      }}
     runs-on: ubuntu-latest
     name: "Test | PHP ${{ matrix.php-version }}"
     strategy:
       fail-fast: false
       matrix:
         php-version:
-          - "8.2"
-          - "8.3"
-          - "8.4"
           - "8.5"
     steps:
       - uses: actions/checkout@v7
@@ -73,16 +65,6 @@ jobs:
           if-no-files-found: ignore
 
   macos:
-    if: >-
-      ${{
-        (github.event_name == 'pull_request' &&
-          !startsWith(github.head_ref, 'windows/')) ||
-        (github.event_name == 'push' &&
-          (github.ref_name == 'develop' ||
-            github.ref_name == 'master' ||
-            startsWith(github.ref, 'refs/tags/v'))) ||
-        startsWith(github.head_ref || github.ref_name, 'darwin/')
-      }}
     name: "macOS | PHP ${{ matrix.php-version }} ${{ matrix.ts }} ${{ matrix.arch }}"
     runs-on: ${{ matrix.runner }}
     env:
@@ -176,16 +158,6 @@ jobs:
           if-no-files-found: error
 
   windows:
-    if: >-
-      ${{
-        (github.event_name == 'pull_request' &&
-          !startsWith(github.head_ref, 'darwin/')) ||
-        (github.event_name == 'push' &&
-          (github.ref_name == 'develop' ||
-            github.ref_name == 'master' ||
-            startsWith(github.ref, 'refs/tags/v'))) ||
-        startsWith(github.head_ref || github.ref_name, 'windows/')
-      }}
     runs-on: windows-2022
     name: "Windows | PHP ${{ matrix.php-version }} ${{ matrix.ts }} x64"
     strategy:
@@ -253,11 +225,6 @@ jobs:
           if-no-files-found: ignore
 
   nix-matrix:
-    if: >-
-      ${{
-        !startsWith(github.head_ref || github.ref_name, 'darwin/') &&
-        !startsWith(github.head_ref || github.ref_name, 'windows/')
-      }}
     runs-on: ubuntu-latest
     name: Nix matrix
     outputs:

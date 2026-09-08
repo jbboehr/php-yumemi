@@ -105,15 +105,18 @@ or use a `path:` flake reference while developing them.
 
 ## Native CI matrix
 
-Pull requests targeting `develop` or `master`, direct pushes to those branches, and `v*` tag pushes run every job
-below. Qualification branches beginning with `darwin/` or `windows/` run only their matching native-platform matrix,
-including when they are used as pull-request branches.
+Every CI run uses the full Nix gate and the native matrix below. This applies to pull requests targeting `develop` or
+`master`, pushes to those branches, `darwin/` and `windows/` qualification branches, and `v*` tags. Branch and
+pull-request runs retain all 16 packages as CI artifacts; only successful tag builds publish a release.
 
 | Platform | Matrix |
 | --- | --- |
-| Linux x86_64 | PHP 8.2, 8.3, 8.4, and 8.5 NTS plus the Nix gate above |
+| Linux x86_64 without Nix | PHP 8.5 NTS smoke build |
 | Apple Silicon macOS 15 | PHP 8.2, 8.3, 8.4, and 8.5, each NTS and ZTS |
 | Windows Server 2022 x64 | PHP 8.2, 8.3, 8.4, and 8.5, each NTS and TS |
+
+Every native build runs the complete PHPT suite and existing package checks. The Nix matrix and caching are the same
+for every CI run.
 
 The macOS jobs use the standard `phpize` build. Windows uses `config.w32` through
 [`php/php-windows-builder`](https://github.com/php/php-windows-builder). The Windows action receives the tag name for
