@@ -15,8 +15,9 @@ optional native unit-expression parser. yumemi.php continues to work without the
 
 - PHP 8.2 through 8.5.
 - GMP for the yumemi.php runtime.
-- x86_64 Linux, or x64 Windows with a release that includes precompiled DLLs, for installation through PIE. macOS is a
-  best-effort source-build target. Windows packages cover NTS and TS builds; version 0.1.0 has no Windows PIE packages.
+- x86_64 Linux, x64 Windows, or Apple Silicon macOS 15 or later for installation through PIE. Windows and macOS binary
+  packages cover NTS and ZTS builds; version 0.1.0 has no prebuilt packages. Intel macOS remains a best-effort source-build
+  target.
 
 Version 0.1.0 is the initial release. The native integration remains provisional.
 
@@ -33,6 +34,9 @@ Install the extension with [PIE](https://github.com/php/pie):
 ```console
 pie install jbboehr/php-yumemi
 ```
+
+On Apple Silicon, PIE downloads a matching prebuilt extension when the release provides one. On Linux and macOS,
+PIE falls back to a source build when no matching package exists. Windows requires a precompiled DLL package.
 
 If more than one PHP installation is present, run PIE with the PHP binary or `php-config` for the installation that
 will load the extension.

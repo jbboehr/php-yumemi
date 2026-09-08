@@ -101,7 +101,7 @@ including when they are used as pull-request branches.
 | --- | --- |
 | Linux x86_64 | PHP 8.2, 8.3, 8.4, and 8.5 NTS plus the Nix gate above |
 | Intel macOS | PHP 8.2 x64 |
-| Apple Silicon macOS | PHP 8.5 arm64 |
+| Apple Silicon macOS 15 | PHP 8.2, 8.3, 8.4, and 8.5, each NTS and ZTS |
 | Windows Server 2022 x64 | PHP 8.2, 8.3, 8.4, and 8.5, each NTS and TS |
 
 The macOS jobs use the standard `phpize` build. Windows uses `config.w32` through
@@ -109,9 +109,13 @@ The macOS jobs use the standard `phpize` build. Windows uses `config.w32` throug
 tag builds so PIE can match release assets. Branch and pull-request builds use the commit SHA because branch refs
 containing `/` are not path-safe. Each package includes the license and third-party notices.
 
-Windows packages are retained as `php_yumemi-*.zip` artifacts on every build. Only `v*` tag pushes publish a GitHub
-Release with those packages, after every CI job succeeds. Branch and pull-request builds never modify releases.
-See [Release](RELEASE.md#windows-pie-packages) for publication.
+The macOS ARM64 jobs package the tested module with license notices using PIE's Unix binary naming convention. They
+verify the PHP version and thread-safety mode, ARM64 architecture, system-library dependencies, and loading from the
+extracted ZIP. `MACOSX_DEPLOYMENT_TARGET=15.0` fixes the minimum macOS version. Intel macOS remains a source-build job.
+
+Windows and macOS ARM64 packages are retained as `php_yumemi-*.zip` artifacts on every build. Only `v*` tag pushes
+publish a GitHub Release with those packages, after every CI job succeeds. Branch and pull-request builds never modify
+releases. See [Release](RELEASE.md#binary-release-packages) for publication.
 
 ## PHPT suite
 
@@ -147,7 +151,7 @@ environment variables, so accidentally omitting either variable cannot turn a qu
 
 - `config.m4` defines the Unix-like `phpize` build.
 - `config.w32` defines the Windows build.
-- `composer.json` defines the PIE extension package and Linux/Windows install envelope.
+- `composer.json` defines the PIE extension package, platform envelope, and binary/source download preference.
 - `nix/derivation.nix` packages the extension for the flake's PHP versions.
 - `nix/checks.nix` defines the Nix verification checks and their platform conditions.
 - `php_yumemi.h` contains module metadata.

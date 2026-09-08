@@ -23,7 +23,12 @@
         "support-nts": true,
         "os-families": [
             "linux",
-            "windows"
+            "windows",
+            "darwin"
+        ],
+        "download-url-method": [
+            "pre-packaged-binary",
+            "composer-default"
         ],
         "configure-options": [
             {

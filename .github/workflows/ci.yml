@@ -83,18 +83,22 @@ jobs:
             startsWith(github.ref, 'refs/tags/v'))) ||
         startsWith(github.head_ref || github.ref_name, 'darwin/')
       }}
-    name: "macOS | PHP ${{ matrix.php-version }} ${{ matrix.arch }}"
+    name: "macOS | PHP ${{ matrix.php-version }} ${{ matrix.ts }} ${{ matrix.arch }}"
     runs-on: ${{ matrix.runner }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "15.0"
     strategy:
       fail-fast: false
       matrix:
+        php-version: ["8.2", "8.3", "8.4", "8.5"]
+        ts: [nts, zts]
+        arch: [arm64]
+        runner: [macos-15]
         include:
           - php-version: "8.2"
+            ts: nts
             arch: x64
             runner: macos-15-intel
-          - php-version: "8.5"
-            arch: arm64
-            runner: macos-15
     steps:
       - uses: actions/checkout@v7
       - name: Install PHP
@@ -102,10 +106,27 @@ jobs:
         with:
           coverage: "none"
           php-version: "${{ matrix.php-version }}"
+        env:
+          phpts: ${{ matrix.ts }}
+      - name: Verify PHP build mode
+        env:
+          PHP_VERSION: ${{ matrix.php-version }}
+          PHP_THREAD_SAFETY: ${{ matrix.ts }}
+        run: |
+          php -n <<'PHP'
+          <?php
+            $version = PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;
+            $ts = PHP_ZTS ? "zts" : "nts";
+            if ($version !== getenv("PHP_VERSION") || $ts !== getenv("PHP_THREAD_SAFETY") || PHP_DEBUG) {
+                file_put_contents("php://stderr", "Unexpected PHP build: $version $ts\n");
+                exit(1);
+            }
+          PHP
       - run: phpize
       - run: ./configure --enable-yumemi
       - run: make
-      - run: make test
+      # Homebrew ZTS php-config can report NONE for the CLI; use the validated PHP.
+      - run: make test PHP_EXECUTABLE="$(command -v php)"
         env:
           NO_INTERACTION: 1
           REPORT_EXIT_STATUS: 1
@@ -120,7 +141,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: "phpt-macos-${{ matrix.php-version }}-${{ matrix.arch }}"
+          name: "phpt-macos-${{ matrix.php-version }}-${{ matrix.ts }}-${{ matrix.arch }}"
           path: |
             ${{ runner.temp }}/phpt-junit.xml
             ${{ runner.temp }}/phpt-results.txt
@@ -134,6 +155,32 @@ jobs:
           if-no-files-found: ignore
       - name: Verify extension is loaded
         run: php -n -d extension="$(pwd)/modules/yumemi.so" --ri yumemi
+      - name: Package macOS ARM64 extension
+        if: matrix.arch == 'arm64'
+        id: macos-package
+        env:
+          PACKAGE_REF: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+          PHP_VERSION: ${{ matrix.php-version }}
+          PHP_THREAD_SAFETY: ${{ matrix.ts }}
+        run: |
+          test "$(lipo -archs modules/yumemi.so)" = arm64
+          otool -L modules/yumemi.so > "$RUNNER_TEMP/yumemi-libraries.txt"
+          cat "$RUNNER_TEMP/yumemi-libraries.txt"
+          awk 'NR > 1 && $1 !~ /^\/usr\/lib\// && $1 !~ /^\/System\/Library\// { exit 1 }' \
+            "$RUNNER_TEMP/yumemi-libraries.txt"
+          package="php_yumemi-${PACKAGE_REF}_php${PHP_VERSION}-arm64-darwin-bsdlibc-${PHP_THREAD_SAFETY}.zip"
+          mkdir -p artifacts
+          zip -j "artifacts/$package" modules/yumemi.so LICENSE.md docs/LICENSE_EXCEPTION.md docs/UDUNITS-COPYRIGHT
+          unzip -q "artifacts/$package" -d "$RUNNER_TEMP/yumemi-package"
+          php -n -d extension="$RUNNER_TEMP/yumemi-package/yumemi.so" --ri yumemi
+          echo "package=$package" >> "$GITHUB_OUTPUT"
+      - name: Upload macOS package
+        if: matrix.arch == 'arm64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.macos-package.outputs.package }}
+          path: artifacts/${{ steps.macos-package.outputs.package }}
+          if-no-files-found: error
 
   windows:
     if: >-
@@ -212,21 +259,21 @@ jobs:
             build/**/tests/**/*.sh
           if-no-files-found: ignore
 
-  windows-release:
-    name: Publish Windows release
+  release:
+    name: Publish release packages
     needs: [test, macos, windows, nix]
     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download Windows packages
+      - name: Download release packages
         uses: actions/download-artifact@v8
         with:
           pattern: php_yumemi-*.zip
           path: artifacts
           merge-multiple: true
-      - name: Publish the release with Windows packages
+      - name: Publish the release with binary packages
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

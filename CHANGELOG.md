@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Windows PIE packaging for PHP 8.2–8.5, NTS and TS on x64. Tag builds publish a GitHub Release with DLL ZIPs;
   `master` and `develop` builds retain the same packages as CI artifacts without creating a release.
+- macOS ARM64 PIE packages for PHP 8.2–8.5, NTS and ZTS, targeting macOS 15 or later. Branch builds retain ZIP
+  artifacts; tag builds publish them alongside the Windows packages. PIE falls back to source builds on Unix when
+  no matching binary is available.
 
 ## [0.1.0] - 2026-09-05
 
