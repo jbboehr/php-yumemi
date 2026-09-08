@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Windows PIE packaging for PHP 8.2–8.5, NTS and TS on x64. Tag builds publish a GitHub Release with DLL ZIPs;
+  `master` and `develop` builds retain the same packages as CI artifacts without creating a release.
+
 ## [0.1.0] - 2026-09-05
 
 Initial release. Compatible with yumemi.php

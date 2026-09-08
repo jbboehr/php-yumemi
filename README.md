@@ -15,8 +15,8 @@ optional native unit-expression parser. yumemi.php continues to work without the
 
 - PHP 8.2 through 8.5.
 - GMP for the yumemi.php runtime.
-- x86_64 Linux for installation through PIE. macOS and Windows are best-effort source-build targets, and no precompiled
-  Windows DLLs are published.
+- x86_64 Linux, or x64 Windows with a release that includes precompiled DLLs, for installation through PIE. macOS is a
+  best-effort source-build target. Windows packages cover NTS and TS builds; version 0.1.0 has no Windows PIE packages.
 
 Version 0.1.0 is the initial release. The native integration remains provisional.
 

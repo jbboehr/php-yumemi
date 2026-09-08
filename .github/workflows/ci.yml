@@ -151,25 +151,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - php-version: "8.2"
-            ts: nts
-          - php-version: "8.4"
-            ts: nts
-          - php-version: "8.4"
-            ts: ts
-          - php-version: "8.5"
-            ts: nts
+        php-version: ["8.2", "8.3", "8.4", "8.5"]
+        ts: [nts, ts]
     steps:
       - uses: actions/checkout@v7
+      - name: Prepare license notices for the Windows package
+        shell: pwsh
+        # The builder includes LICENSE, COPYRIGHT, and COPYING automatically.
+        run: |
+          Get-Content LICENSE.md, docs/LICENSE_EXCEPTION.md, docs/UDUNITS-COPYRIGHT |
+            Set-Content -Encoding utf8 LICENSE
       - name: Build and test the Windows extension
         uses: php/php-windows-builder/extension@v1
         env:
           TEST_PHP_JUNIT: "${{ runner.temp }}/phpt-junit.xml"
         with:
-          # The builder embeds this value in Windows filenames, so branch refs
-          # containing "/" are not safe here.
-          extension-ref: "${{ github.sha }}"
+          # PIE matches release assets by tag. SHAs keep branch and PR filenames safe.
+          extension-ref: "${{ github.ref_type == 'tag' && github.ref_name || github.sha }}"
           php-version: "${{ matrix.php-version }}"
           arch: x64
           ts: "${{ matrix.ts }}"
@@ -213,6 +211,32 @@ jobs:
             build/**/tests/**/*.php
             build/**/tests/**/*.sh
           if-no-files-found: ignore
+
+  windows-release:
+    name: Publish Windows release
+    needs: [test, macos, windows, nix]
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: php_yumemi-*.zip
+          path: artifacts
+          merge-multiple: true
+      - name: Publish the release with Windows packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --notes ""
+          fi
+          gh release upload "$RELEASE_TAG" artifacts/php_yumemi-*.zip --clobber
+          gh release edit "$RELEASE_TAG" --draft=false
 
   nix:
     if: >-

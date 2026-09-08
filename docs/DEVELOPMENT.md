@@ -102,11 +102,16 @@ including when they are used as pull-request branches.
 | Linux x86_64 | PHP 8.2, 8.3, 8.4, and 8.5 NTS plus the Nix gate above |
 | Intel macOS | PHP 8.2 x64 |
 | Apple Silicon macOS | PHP 8.5 arm64 |
-| Windows Server 2022 x64 | PHP 8.2 NTS, PHP 8.4 NTS and TS, PHP 8.5 NTS |
+| Windows Server 2022 x64 | PHP 8.2, 8.3, 8.4, and 8.5, each NTS and TS |
 
 The macOS jobs use the standard `phpize` build. Windows uses `config.w32` through
-[`php/php-windows-builder`](https://github.com/php/php-windows-builder). The Windows action receives the commit SHA as
-its extension ref because it embeds that value in filenames and branch refs containing `/` are not path-safe.
+[`php/php-windows-builder`](https://github.com/php/php-windows-builder). The Windows action receives the tag name for
+tag builds so PIE can match release assets. Branch and pull-request builds use the commit SHA because branch refs
+containing `/` are not path-safe. Each package includes the license and third-party notices.
+
+Windows packages are retained as `php_yumemi-*.zip` artifacts on every build. Only `v*` tag pushes publish a GitHub
+Release with those packages, after every CI job succeeds. Branch and pull-request builds never modify releases.
+See [Release](RELEASE.md#windows-pie-packages) for publication.
 
 ## PHPT suite
 
@@ -142,7 +147,7 @@ environment variables, so accidentally omitting either variable cannot turn a qu
 
 - `config.m4` defines the Unix-like `phpize` build.
 - `config.w32` defines the Windows build.
-- `composer.json` defines the PIE extension package and Linux install envelope.
+- `composer.json` defines the PIE extension package and Linux/Windows install envelope.
 - `nix/derivation.nix` packages the extension for the flake's PHP versions.
 - `nix/checks.nix` defines the Nix verification checks and their platform conditions.
 - `php_yumemi.h` contains module metadata.

@@ -1,7 +1,6 @@
 # Release and compatibility policy
 
-This policy describes the first tagged `php-yumemi` release. Until that tag exists, `develop` is experimental and
-unsupported.
+This policy describes releases prepared from the current source. `develop` is experimental and unsupported.
 
 The extension is optional. [yumemi.php](https://github.com/jbboehr/yumemi.php) keeps its method API and generated parser
 when no native code is installed.
@@ -30,18 +29,18 @@ methods. Public userland methods define the arithmetic contract.
 
 ## Platform envelope
 
-The first release separates supported package installations from source-build coverage:
+Supported package installations and source-build coverage are qualified separately:
 
 | Tier | Combinations | Release meaning |
 | --- | --- | --- |
 | Supported PIE envelope | x86_64 Linux, PHP 8.2–8.5, NTS and ZTS | Reported defects are supported. Every release runs all four NTS builds, ZTS/debug endpoint builds on 8.2 and 8.5, a clean PIE build/load check, and the real yumemi.php integration matrix. |
 | Best-effort source builds | Intel macOS with PHP 8.2 and Apple Silicon macOS with PHP 8.5 | These exact combinations run for release commits and tags. They qualify the source-build path but do not promise PIE installation or every PHP/architecture combination on macOS. |
-| Best-effort source builds | x64 Windows with PHP 8.2, 8.4, and 8.5 NTS plus PHP 8.4 TS | These exact combinations run for release commits and tags. They qualify `config.w32` source builds but do not promise PIE installation or unlisted Windows combinations. |
+| Windows PIE packages | x64 Windows, PHP 8.2–8.5, NTS and TS | All eight combinations build and run the PHPT suite for branches and tags. PIE requires the matching ZIP on a published GitHub Release. Version 0.1.0 predates these packages. |
 | Unqualified | Other PHP versions, operating systems, architectures, SAPIs, and build modes | They may work, but they are unsupported until this policy includes them. |
 
-The Linux PIE manifest covers NTS and ZTS across the full PHP range. Endpoint ZTS/debug jobs test thread safety, and the
-NTS matrix tests each PHP minor. A failure in any supported combination blocks the release. If a hosted runner prevents
-a best-effort native job from running, record the outage instead of counting the job as a pass.
+The PIE manifest covers Linux and Windows NTS and ZTS across the full PHP range. Linux endpoint ZTS/debug jobs test
+thread safety, and the NTS matrix tests each PHP minor. A failure in any supported combination blocks the release. If a
+hosted runner prevents a best-effort native job from running, record the outage instead of counting the job as a pass.
 
 ## Version coordination
 
@@ -120,11 +119,45 @@ Prepare releases on `develop`, merge the tested commit into `master`, and tag th
 6. Merge the verified commit to `master`. Confirm the GitHub Actions run for that exact commit passes, including the
    listed macOS and Windows qualification jobs.
 7. Create and verify a signed annotated `vX.Y.Z` tag without moving or replacing an existing tag.
-8. Confirm the tag's GitHub Actions run, create the GitHub Release from the matching changelog section, and verify that
-   Packagist indexes the tag for the already-registered PIE package.
+8. Confirm the tag's GitHub Actions run and its automatically published GitHub Release with eight Windows ZIP assets.
+   Add the matching changelog section as release notes and verify that Packagist indexes the tag for the
+   already-registered PIE package.
 9. From a clean machine or temporary environment, run `pie install jbboehr/php-yumemi:X.Y.Z`, load the module, and use
    it with the named compatible yumemi.php release.
 
 If publication fails after pushing the tag, keep the tag and repair the failed publication step. Publish a new version
 only if the code must change. A PECL `package.xml` is out of scope unless the project later chooses to publish through
 PECL.
+
+## Windows PIE packages
+
+The CI workflow uses the official [PHP Windows builder](https://github.com/php/php-windows-builder) to produce
+[PIE-compatible Windows packages](https://github.com/php/pie/blob/1.5.x/docs/extension-maintainers.md#windows-support).
+The ZIP and its extension DLL share the name
+`php_yumemi-{tag}-{php-version}-{nts|ts}-{compiler}-x86_64`, with their respective suffixes. Preserve the tag's `v`
+prefix. PHP 8.2 and 8.3 use `vs16`; PHP 8.4 and 8.5 use `vs17`.
+
+After all tag CI jobs pass, `windows-release` creates a draft release if necessary, attaches only the binary ZIPs, and
+publishes the release after the upload succeeds. Branch and pull-request builds retain CI artifacts without touching
+releases.
+Download a run's packages with:
+
+```console
+gh run download RUN_ID --pattern 'php_yumemi-*.zip' --dir windows-packages
+```
+
+Each artifact contains the distributable ZIP at its root and a separate `logs/` ZIP. Only the root ZIP belongs on the
+release. To repair an upload, rerun the failed tag job; it publishes only after a successful upload. Immutable releases cannot accept
+replacement assets.
+
+For a local Windows rebuild, install the matching Visual Studio toolchain and the builder's `BuildPhpExtension`
+PowerShell module, then run from the tagged source checkout:
+
+```powershell
+Get-Content LICENSE.md, docs/LICENSE_EXCEPTION.md, docs/UDUNITS-COPYRIGHT |
+    Set-Content -Encoding utf8 LICENSE
+Invoke-PhpBuildExtension -ExtensionRef vX.Y.Z -PhpVersion 8.4 -Arch x64 -Ts nts -Args '--enable-yumemi'
+```
+
+Repeat for each PHP version and thread-safety mode. The output is under `artifacts/`. Verify the ZIP contains its
+matching DLL and `LICENSE`, then run a clean Windows PIE install and module-load check after the release is published.
