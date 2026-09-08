@@ -94,11 +94,6 @@ jobs:
         ts: [nts, zts]
         arch: [arm64]
         runner: [macos-15]
-        include:
-          - php-version: "8.2"
-            ts: nts
-            arch: x64
-            runner: macos-15-intel
     steps:
       - uses: actions/checkout@v7
       - name: Install PHP
@@ -156,7 +151,6 @@ jobs:
       - name: Verify extension is loaded
         run: php -n -d extension="$(pwd)/modules/yumemi.so" --ri yumemi
       - name: Package macOS ARM64 extension
-        if: matrix.arch == 'arm64'
         id: macos-package
         env:
           PACKAGE_REF: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
@@ -175,7 +169,6 @@ jobs:
           php -n -d extension="$RUNNER_TEMP/yumemi-package/yumemi.so" --ri yumemi
           echo "package=$package" >> "$GITHUB_OUTPUT"
       - name: Upload macOS package
-        if: matrix.arch == 'arm64'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.macos-package.outputs.package }}

@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   artifacts; tag builds publish them alongside the Windows packages. PIE falls back to source builds on Unix when
   no matching binary is available.
 
+### Removed
+
+- Intel macOS CI coverage and best-effort source-build support.
+
 ## [0.1.0] - 2026-09-05
 
 Initial release. Compatible with yumemi.php

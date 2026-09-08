@@ -100,7 +100,6 @@ including when they are used as pull-request branches.
 | Platform | Matrix |
 | --- | --- |
 | Linux x86_64 | PHP 8.2, 8.3, 8.4, and 8.5 NTS plus the Nix gate above |
-| Intel macOS | PHP 8.2 x64 |
 | Apple Silicon macOS 15 | PHP 8.2, 8.3, 8.4, and 8.5, each NTS and ZTS |
 | Windows Server 2022 x64 | PHP 8.2, 8.3, 8.4, and 8.5, each NTS and TS |
 
@@ -111,7 +110,7 @@ containing `/` are not path-safe. Each package includes the license and third-pa
 
 The macOS ARM64 jobs package the tested module with license notices using PIE's Unix binary naming convention. They
 verify the PHP version and thread-safety mode, ARM64 architecture, system-library dependencies, and loading from the
-extracted ZIP. `MACOSX_DEPLOYMENT_TARGET=15.0` fixes the minimum macOS version. Intel macOS remains a source-build job.
+extracted ZIP. `MACOSX_DEPLOYMENT_TARGET=15.0` fixes the minimum macOS version.
 
 Windows and macOS ARM64 packages are retained as `php_yumemi-*.zip` artifacts on every build. Only `v*` tag pushes
 publish a GitHub Release with those packages, after every CI job succeeds. Branch and pull-request builds never modify

@@ -35,13 +35,11 @@ Supported package installations and source-build coverage are qualified separate
 | --- | --- | --- |
 | Supported PIE envelope | x86_64 Linux, PHP 8.2–8.5, NTS and ZTS | Reported defects are supported. Every release runs all four NTS builds, ZTS/debug endpoint builds on 8.2 and 8.5, a clean PIE build/load check, and the real yumemi.php integration matrix. |
 | macOS PIE packages | Apple Silicon, macOS 15 or later, PHP 8.2–8.5, NTS and ZTS | All eight combinations build, run the PHPT suite, and load the packaged module on macOS 15. PIE selects matching release ZIPs and falls back to source when none exists. |
-| Best-effort source builds | Intel macOS with PHP 8.2 NTS | This combination runs for release commits and tags. No Intel macOS binaries are published. |
 | Windows PIE packages | x64 Windows, PHP 8.2–8.5, NTS and TS | All eight combinations build and run the PHPT suite for branches and tags. PIE requires the matching ZIP on a published GitHub Release. Version 0.1.0 predates these packages. |
-| Unqualified | Other PHP versions, operating systems, architectures, SAPIs, and build modes | They may work, but they are unsupported until this policy includes them. |
+| Unqualified | Intel macOS and other PHP versions, operating systems, architectures, SAPIs, and build modes | They may work, but they are unsupported until this policy includes them. |
 
 The PIE manifest covers Linux, Windows, and macOS NTS and ZTS across the full PHP range. Linux endpoint ZTS/debug jobs test
-thread safety, and the NTS matrix tests each PHP minor. A failure in any supported combination blocks the release. If a
-hosted runner prevents a best-effort native job from running, record the outage instead of counting the job as a pass.
+thread safety, and the NTS matrix tests each PHP minor. A failure in any supported combination blocks the release.
 
 ## Version coordination
 

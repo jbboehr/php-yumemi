@@ -16,8 +16,7 @@ optional native unit-expression parser. yumemi.php continues to work without the
 - PHP 8.2 through 8.5.
 - GMP for the yumemi.php runtime.
 - x86_64 Linux, x64 Windows, or Apple Silicon macOS 15 or later for installation through PIE. Windows and macOS binary
-  packages cover NTS and ZTS builds; version 0.1.0 has no prebuilt packages. Intel macOS remains a best-effort source-build
-  target.
+  packages cover NTS and ZTS builds; version 0.1.0 has no prebuilt packages.
 
 Version 0.1.0 is the initial release. The native integration remains provisional.
 
