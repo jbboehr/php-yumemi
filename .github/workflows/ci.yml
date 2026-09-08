@@ -278,15 +278,47 @@ jobs:
           gh release upload "$RELEASE_TAG" artifacts/php_yumemi-*.zip --clobber
           gh release edit "$RELEASE_TAG" --draft=false
 
-  nix:
+  nix-matrix:
     if: >-
       ${{
         !startsWith(github.head_ref || github.ref_name, 'darwin/') &&
         !startsWith(github.head_ref || github.ref_name, 'windows/')
       }}
     runs-on: ubuntu-latest
-    name: Nix
+    name: Nix matrix
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v7
       - uses: cachix/install-nix-action@v31
-      - run: nix flake check --keep-going -L
+      - uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-matrix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.lock', '**/*.nix') }}
+          restore-prefixes-first-match: nix-matrix-${{ runner.os }}-${{ runner.arch }}-
+      - run: nix flake check --no-build --keep-going -L
+      - name: Generate Nix matrix
+        id: set-matrix
+        run: |
+          matrix="$(nix eval --json .#githubActions.matrix)"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  nix:
+    name: "Nix | ${{ matrix.name }} (${{ matrix.system }})"
+    needs: nix-matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.nix-matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
+      - uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ matrix.system }}-${{ matrix.name }}--${{ hashFiles('flake.lock') }}-${{ github.sha }}
+          restore-prefixes-first-match: |
+            nix-${{ matrix.system }}-${{ matrix.name }}--${{ hashFiles('flake.lock') }}-
+            nix-${{ matrix.system }}-${{ matrix.name }}--
+      - name: Build Nix check
+        env:
+          NIX_ATTR: ${{ matrix.attr }}
+        run: nix build --no-link --keep-going -L ".#$NIX_ATTR"

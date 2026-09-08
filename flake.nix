@@ -11,6 +11,10 @@
       url = "github:numtide/flake-utils";
       inputs.systems.follows = "systems";
     };
+    nix-github-actions = {
+      url = "github:nix-community/nix-github-actions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -32,6 +36,7 @@
       self,
       nixpkgs,
       flake-utils,
+      nix-github-actions,
       treefmt-nix,
       agent-badge,
       ...
@@ -188,5 +193,12 @@
         };
         formatter = treefmt.config.build.wrapper;
       }
-    );
+    )
+    // {
+      githubActions = nix-github-actions.lib.mkGithubMatrix {
+        checks = {
+          inherit (self.checks) x86_64-linux;
+        };
+      };
+    };
 }

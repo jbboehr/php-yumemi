@@ -88,6 +88,18 @@ It covers:
 - Composer manifest validation.
 - a clean PHP 8.2 PIE build and module load without Flex or Bison.
 
+GitHub Actions validates the flake, then runs each `checks.x86_64-linux` attribute in a separate job. The matrix comes
+from the `githubActions` flake output through [nix-github-actions](https://github.com/nix-community/nix-github-actions).
+Every Nix check must pass before a tag build publishes release packages. Inspect the generated matrix with:
+
+```console
+nix eval --json .#githubActions.matrix
+```
+
+The matrix and build jobs use [cache-nix-action](https://github.com/nix-community/cache-nix-action) to restore and save
+the Nix store. Build caches are keyed by system, check, lock file, and commit, with fallback to earlier caches for the
+same check. Checks run after every restore; a cache hit does not skip validation.
+
 The default flake source comes from Git, so it excludes untracked files. Stage new files before using the default check,
 or use a `path:` flake reference while developing them.
 
