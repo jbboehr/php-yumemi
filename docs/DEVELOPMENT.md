@@ -82,6 +82,7 @@ It covers:
 - PHP 8.2, 8.3, 8.4, and 8.5 NTS builds and PHPTs.
 - agreement between each tested module's reported version and its Nix package metadata.
 - PHP 8.2 and 8.5 ZTS/debug endpoint builds.
+- Windows x64 cross-builds for PHP 8.2–8.5, each NTS and TS, using xwin and LLVM.
 - a PHP 8.5 Clang ASan/UBSan build.
 - C and Nix formatting through treefmt-nix, plus Actionlint.
 - committed Flex/Bison output.
@@ -102,6 +103,25 @@ same check. Checks run after every restore; a cache hit does not skip validation
 
 The default flake source comes from Git, so it excludes untracked files. Stage new files before using the default check,
 or use a `path:` flake reference while developing them.
+
+## Windows cross-builds
+
+The flake exposes `php82-windows-nts` through `php85-windows-nts` and the corresponding `-windows-ts` packages:
+
+```console
+nix build .#php85-windows-nts
+nix build .#php85-windows-ts
+```
+
+Each output contains `lib/php/extensions/php_yumemi.dll` and license notices. These same derivations are flake checks,
+so the generated Nix CI matrix includes all eight builds. They compile and link against pinned PHP Windows development
+packs and check the DLL's x64 architecture, PHP import library, and module export. Native Windows CI runs the PHPT suite
+and produces the release ZIPs.
+
+[`nix/windows.nix`](../nix/windows.nix) pins the PHP development packs and uses nixpkgs' xwin-backed `windows.sdk`.
+Its toolchain configuration enables Microsoft SDK license acceptance and permits those SDK packages as unfree
+dependencies. PHP versions and hashes come from the official Windows release metadata; downloads fall back to its
+archive when releases move there.
 
 ## Native CI matrix
 

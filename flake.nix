@@ -152,6 +152,10 @@
           };
 
         packagesByPhp = lib.mapAttrs (_: php: makePackage { inherit php; }) phpVersions;
+        windowsPackages = import ./nix/windows.nix {
+          inherit nixpkgs system src;
+          inherit (packagesByPhp.php82) version meta;
+        };
         devShellsByPhp = lib.mapAttrs (
           name: php:
           pkgs.mkShell {
@@ -174,20 +178,25 @@
         ) phpVersions;
       in
       {
-        packages = packagesByPhp // {
-          default = packagesByPhp.php82;
-        };
-        checks = import ./nix/checks.nix {
-          inherit
-            pkgs
-            nixpkgs
-            system
-            src
-            phpVersions
-            makePackage
-            ;
-          formatting = treefmt.config.build.check self;
-        };
+        packages =
+          packagesByPhp
+          // windowsPackages
+          // {
+            default = packagesByPhp.php82;
+          };
+        checks =
+          (import ./nix/checks.nix {
+            inherit
+              pkgs
+              nixpkgs
+              system
+              src
+              phpVersions
+              makePackage
+              ;
+            formatting = treefmt.config.build.check self;
+          })
+          // windowsPackages;
         devShells = devShellsByPhp // {
           default = devShellsByPhp.php82;
         };
