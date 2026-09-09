@@ -9,4 +9,4 @@ var_dump(phpversion('yumemi'));
 ?>
 --EXPECT--
 bool(true)
-string(5) "0.1.0"
+string(5) "0.1.1"

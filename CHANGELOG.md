@@ -6,17 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-08
+
+Build and packaging changes. The extension API and native parser ABI are unchanged.
+
 ### Added
 
-- Windows PIE packaging for PHP 8.2–8.5, NTS and TS on x64. Tag builds publish a GitHub Release with DLL ZIPs;
-  `master` and `develop` builds retain the same packages as CI artifacts without creating a release.
-- macOS ARM64 PIE packages for PHP 8.2–8.5, NTS and ZTS, targeting macOS 15 or later. Branch builds retain ZIP
-  artifacts; tag builds publish them alongside the Windows packages. PIE falls back to source builds on Unix when
-  no matching binary is available.
+- Windows x64 PIE packages for PHP 8.2–8.5, NTS and TS.
+- macOS ARM64 PIE packages for PHP 8.2–8.5, NTS and ZTS, targeting macOS 15 or later. PIE falls back to source builds
+  on Unix when no matching binary is available.
+- Nix packages and flake checks for all eight Windows builds, using xwin and LLVM.
+
+### Changed
+
+- Release branches and tags prepare draft releases from tested CI artifacts. All 16 Windows and macOS packages are
+  downloaded and compared after upload. Publication is manual.
 
 ### Removed
 
-- Intel macOS CI coverage and best-effort source-build support.
+- Intel macOS CI coverage and best-effort support. Intel macOS source builds are now unqualified.
 
 ## [0.1.0] - 2026-09-05
 
@@ -33,5 +41,6 @@ from its planned 0.2.0 release. yumemi.php 0.1.x does not provide the native int
 - PIE installation on x86_64 Linux with PHP 8.2–8.5 NTS and ZTS, plus best-effort macOS and Windows source builds.
   Generated lexer and parser sources are included, so normal builds do not require Flex or Bison.
 
-[Unreleased]: https://github.com/jbboehr/php-yumemi/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/jbboehr/php-yumemi/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/jbboehr/php-yumemi/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/jbboehr/php-yumemi/releases/tag/v0.1.0

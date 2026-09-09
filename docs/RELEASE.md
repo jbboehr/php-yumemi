@@ -100,7 +100,7 @@ exact `master` commit.
    `YUMEMI_RELEASE_VERSION` below to the intended tag without its `v` prefix:
 
    ```sh
-   YUMEMI_RELEASE_VERSION=0.1.0
+   YUMEMI_RELEASE_VERSION=0.1.1
    YUMEMI_PACKAGE_VERSION=$(nix eval --raw .#packages.x86_64-linux.php82.version) &&
    php -n -d extension=modules/yumemi.so -r '
        foreach (["module" => phpversion("yumemi"), "Nix package" => $argv[2]] as $source => $actual) {
