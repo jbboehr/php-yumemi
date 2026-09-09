@@ -127,9 +127,9 @@ The macOS ARM64 jobs package the tested module with license notices using PIE's 
 verify the PHP version and thread-safety mode, ARM64 architecture, system-library dependencies, and loading from the
 extracted ZIP. `MACOSX_DEPLOYMENT_TARGET=15.0` fixes the minimum macOS version.
 
-Windows and macOS ARM64 packages are retained as `php_yumemi-*.zip` artifacts on every build. After successful `v*` tag
-CI, the separate `release` workflow downloads those packages from that exact run and publishes them. Branch and
-pull-request builds never modify releases. See [Release](RELEASE.md#binary-release-packages) for publication.
+Windows and macOS ARM64 packages are retained as `php_yumemi-*.zip` artifacts on every build. After all builds pass,
+CI calls `release.yml` to download and verify all 16 packages from the same run. This stage runs on branches, pull
+requests, and tags; only tags publish releases. See [Release](RELEASE.md#binary-release-packages) for publication.
 
 ## PHPT suite
 

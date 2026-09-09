@@ -20,19 +20,14 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: "Test | PHP ${{ matrix.php-version }}"
-    strategy:
-      fail-fast: false
-      matrix:
-        php-version:
-          - "8.5"
+    name: "Test | PHP 8.5"
     steps:
       - uses: actions/checkout@v7
       - name: Install PHP
         uses: shivammathur/setup-php@v2
         with:
           coverage: "none"
-          php-version: "${{ matrix.php-version }}"
+          php-version: "8.5"
       - run: phpize
       - run: ./configure --enable-yumemi
       - run: make
@@ -51,7 +46,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: "phpt-linux-${{ matrix.php-version }}"
+          name: "phpt-linux-8.5"
           path: |
             ${{ runner.temp }}/phpt-junit.xml
             ${{ runner.temp }}/phpt-results.txt
@@ -65,8 +60,8 @@ jobs:
           if-no-files-found: ignore
 
   macos:
-    name: "macOS | PHP ${{ matrix.php-version }} ${{ matrix.ts }} ${{ matrix.arch }}"
-    runs-on: ${{ matrix.runner }}
+    name: "macOS | PHP ${{ matrix.php-version }} ${{ matrix.ts }} arm64"
+    runs-on: macos-15
     env:
       MACOSX_DEPLOYMENT_TARGET: "15.0"
     strategy:
@@ -74,8 +69,6 @@ jobs:
       matrix:
         php-version: ["8.2", "8.3", "8.4", "8.5"]
         ts: [nts, zts]
-        arch: [arm64]
-        runner: [macos-15]
     steps:
       - uses: actions/checkout@v7
       - name: Install PHP
@@ -118,7 +111,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: "phpt-macos-${{ matrix.php-version }}-${{ matrix.ts }}-${{ matrix.arch }}"
+          name: "phpt-macos-${{ matrix.php-version }}-${{ matrix.ts }}-arm64"
           path: |
             ${{ runner.temp }}/phpt-junit.xml
             ${{ runner.temp }}/phpt-results.txt
@@ -263,3 +256,10 @@ jobs:
         env:
           NIX_ATTR: ${{ matrix.attr }}
         run: nix build --no-link --keep-going -L ".#$NIX_ATTR"
+
+  release:
+    name: Release
+    needs: [test, macos, windows, nix]
+    uses: ./.github/workflows/release.yml
+    permissions:
+      contents: write

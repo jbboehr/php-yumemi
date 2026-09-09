@@ -118,7 +118,7 @@ Prepare releases on `develop`, merge the tested commit into `master`, and tag th
 6. Merge the verified commit to `master`. Confirm the GitHub Actions run for that exact commit passes, including the
    listed macOS and Windows qualification jobs.
 7. Create and verify a signed annotated `vX.Y.Z` tag without moving or replacing an existing tag.
-8. Confirm the tag's CI run and the subsequent `release` workflow both pass, and that the published GitHub Release has
+8. Confirm the tag's CI run passes, including its release stage, and that the published GitHub Release has
    eight Windows and eight macOS ARM64 ZIP assets.
    Add the matching changelog section as release notes and verify that Packagist indexes the tag for the
    already-registered PIE package.
@@ -131,13 +131,14 @@ PECL.
 
 ## Binary release packages
 
-After all tag CI jobs pass, `.github/workflows/release.yml` runs on the `ci` workflow's completion event. It downloads
-the Windows and macOS ARM64 ZIPs from that exact CI run, verifies that the tag still points to the tested commit, and
-requires all 16 packages before modifying a release. It creates a draft if necessary and publishes after every upload
-succeeds. Branch and pull-request builds retain CI artifacts without touching releases.
+After all builds pass, CI calls `.github/workflows/release.yml` from the same commit. Its three steps download the
+Windows and macOS ARM64 ZIPs from the current run, verify all 16 expected packages, and publish on tags only.
+Branch and pull-request packages use the commit SHA in place of the tag and stop after verification. Tag publication
+checks that the tag still points to the tested commit, creates a draft if necessary, and publishes after every upload
+succeeds.
 
-The release workflow must exist on the default branch (`master`) before GitHub can trigger it. It publishes the tested
-artifacts without rebuilding or restoring a Nix cache. Keep its expected package list aligned with the native CI matrix.
+This stage uses the tested artifacts without rebuilding or restoring a Nix cache. Keep its expected package list
+aligned with the native CI matrix.
 
 Download a run's packages with:
 
@@ -147,7 +148,7 @@ gh run download RUN_ID --pattern 'php_yumemi-*.zip' --dir binary-packages
 
 Each Windows artifact contains the distributable ZIP at its root and a separate `logs/` ZIP. macOS artifacts contain
 only the distributable ZIP. Only the expected root ZIPs belong on the release. To repair an upload, rerun the failed
-`release` workflow; it reuses the original CI run's artifacts. If those artifacts have expired, rerun the tag's CI to
+release job within the CI run; it reuses that run's artifacts. If those artifacts have expired, rerun the tag's CI to
 rebuild them. Immutable releases cannot accept replacement assets.
 
 ### Windows
