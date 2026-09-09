@@ -91,7 +91,7 @@ It covers:
 
 GitHub Actions validates the flake, then runs each `checks.x86_64-linux` attribute in a separate job. The matrix comes
 from the `githubActions` flake output through [nix-github-actions](https://github.com/nix-community/nix-github-actions).
-Every Nix check must pass before a tag build publishes release packages. Inspect the generated matrix with:
+Every Nix check must pass before CI uploads packages to a draft release. Inspect the generated matrix with:
 
 ```console
 nix eval --json .#githubActions.matrix
@@ -125,9 +125,9 @@ archive when releases move there.
 
 ## Native CI matrix
 
-Every CI run uses the full Nix gate and the native matrix below. This applies to pull requests targeting `develop` or
-`master`, pushes to those branches, `darwin/` and `windows/` qualification branches, and `v*` tags. Branch and
-pull-request runs retain all 16 packages as CI artifacts; only successful tag builds publish a release.
+Every CI run uses the full Nix gate and the native matrix below. This applies to pull requests targeting `develop`,
+`master`, or `release/v*`, pushes to those branches, `darwin/` and `windows/` qualification branches, and `v*` tags.
+Every run retains all 16 packages as CI artifacts. Successful release-branch and tag pushes also prepare a draft release.
 
 | Platform | Matrix |
 | --- | --- |
@@ -139,9 +139,10 @@ Every native build runs the complete PHPT suite and existing package checks. The
 for every CI run.
 
 The macOS jobs use the standard `phpize` build. Windows uses `config.w32` through
-[`php/php-windows-builder`](https://github.com/php/php-windows-builder). The Windows action receives the tag name for
-tag builds so PIE can match release assets. Branch and pull-request builds use the commit SHA because branch refs
-containing `/` are not path-safe. Each package includes the license and third-party notices.
+[`php/php-windows-builder`](https://github.com/php/php-windows-builder). The package-reference job selects the tag name,
+or the version after `release/` for release-branch pushes, so PIE can match release assets. Other branches and
+pull-request builds use the commit SHA. Both native builders use this reference. Each package includes the license
+and third-party notices.
 
 The macOS ARM64 jobs package the tested module with license notices using PIE's Unix binary naming convention. They
 verify the PHP version and thread-safety mode, ARM64 architecture, system-library dependencies, and loading from the
@@ -149,7 +150,8 @@ extracted ZIP. `MACOSX_DEPLOYMENT_TARGET=15.0` fixes the minimum macOS version.
 
 Windows and macOS ARM64 packages are retained as `php_yumemi-*.zip` artifacts on every build. After all builds pass,
 CI calls `release.yml` to download and verify all 16 packages from the same run. This stage runs on branches, pull
-requests, and tags; only tags publish releases. See [Release](RELEASE.md#binary-release-packages) for publication.
+requests, and tags. Release-branch and tag pushes upload a draft and verify the downloaded assets against the original
+packages. Publication is manual. See [Release](RELEASE.md#binary-release-packages) for the release procedure.
 
 ## PHPT suite
 

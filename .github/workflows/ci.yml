@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - develop
+      - "release/v*"
       - "darwin/**"
       - "windows/**"
     tags:
@@ -13,11 +14,28 @@ on:
     branches:
       - master
       - develop
+      - "release/v*"
 
 permissions:
   contents: read
 
 jobs:
+  package-ref:
+    name: Package reference
+    runs-on: ubuntu-latest
+    outputs:
+      value: ${{ steps.ref.outputs.value }}
+    steps:
+      - id: ref
+        shell: bash
+        run: |
+          case "$GITHUB_REF" in
+            refs/tags/*) package_ref=$GITHUB_REF_NAME ;;
+            refs/heads/release/*) package_ref=${GITHUB_REF_NAME#release/} ;;
+            *) package_ref=$GITHUB_SHA ;;
+          esac
+          echo "value=$package_ref" >> "$GITHUB_OUTPUT"
+
   test:
     runs-on: ubuntu-latest
     name: "Test | PHP 8.5"
@@ -60,6 +78,7 @@ jobs:
           if-no-files-found: ignore
 
   macos:
+    needs: package-ref
     name: "macOS | PHP ${{ matrix.php-version }} ${{ matrix.ts }} arm64"
     runs-on: macos-15
     env:
@@ -128,7 +147,7 @@ jobs:
       - name: Package macOS ARM64 extension
         id: macos-package
         env:
-          PACKAGE_REF: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+          PACKAGE_REF: ${{ needs.package-ref.outputs.value }}
           PHP_VERSION: ${{ matrix.php-version }}
           PHP_THREAD_SAFETY: ${{ matrix.ts }}
         run: |
@@ -151,6 +170,7 @@ jobs:
           if-no-files-found: error
 
   windows:
+    needs: package-ref
     runs-on: windows-2022
     name: "Windows | PHP ${{ matrix.php-version }} ${{ matrix.ts }} x64"
     strategy:
@@ -171,8 +191,8 @@ jobs:
         env:
           TEST_PHP_JUNIT: "${{ runner.temp }}/phpt-junit.xml"
         with:
-          # PIE matches release assets by tag. SHAs keep branch and PR filenames safe.
-          extension-ref: "${{ github.ref_type == 'tag' && github.ref_name || github.sha }}"
+          # The builder uses the checkout; this ref names the package.
+          extension-ref: "${{ needs.package-ref.outputs.value }}"
           php-version: "${{ matrix.php-version }}"
           arch: x64
           ts: "${{ matrix.ts }}"
@@ -259,7 +279,9 @@ jobs:
 
   release:
     name: Release
-    needs: [test, macos, windows, nix]
+    needs: [package-ref, test, macos, windows, nix]
     uses: ./.github/workflows/release.yml
+    with:
+      package-ref: ${{ needs.package-ref.outputs.value }}
     permissions:
       contents: write

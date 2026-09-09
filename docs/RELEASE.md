@@ -70,7 +70,8 @@ lowering and delegate to `mul(1)` and `mul(-1)`.
 
 ## Prepare and verify a release
 
-Prepare releases on `develop`, merge the tested commit into `master`, and tag that exact `master` commit.
+Prepare releases on `develop`, inspect the draft from a `release/vX.Y.Z` branch, then merge into `master` and tag that
+exact `master` commit.
 
 1. Choose a version and complete `CHANGELOG.md`, including the compatible yumemi.php version or commit when an interface
    changed. Set `PHP_YUMEMI_VERSION` in `php_yumemi.h` and `version` in `nix/derivation.nix` to the tag version without
@@ -115,27 +116,36 @@ Prepare releases on `develop`, merge the tested commit into `master`, and tag th
 
 5. Update yumemi.php's locked `php-yumemi` flake input to the release candidate and run its PHP 8.2–8.5 extension
    integration checks plus `nix flake check --keep-going -L`.
-6. Merge the verified commit to `master`. Confirm the GitHub Actions run for that exact commit passes, including the
-   listed macOS and Windows qualification jobs.
-7. Create and verify a signed annotated `vX.Y.Z` tag without moving or replacing an existing tag.
-8. Confirm the tag's CI run passes, including its release stage, and that the published GitHub Release has
-   eight Windows and eight macOS ARM64 ZIP assets.
-   Add the matching changelog section as release notes and verify that Packagist indexes the tag for the
-   already-registered PIE package.
+6. Push the candidate to `release/vX.Y.Z`, using the intended tag after `release/`. Its full CI run creates or updates
+   the `vX.Y.Z` draft at the tested commit, uploads eight Windows and eight macOS ARM64 ZIPs, and downloads them again
+   to verify their contents. Wait for CI to pass, then inspect the draft and add the matching changelog section as
+   release notes. Further pushes to the branch refresh the same draft after CI passes. CI does not create the Git tag
+   or publish the release.
+7. Merge the verified candidate to `master` and confirm its CI passes. Create and verify a signed annotated `vX.Y.Z`
+   tag at that exact commit without moving or replacing an existing tag. Wait for any release-branch CI runs to finish
+   before pushing the tag.
+8. Wait for the tag's CI to pass, including refreshing and verifying the draft. Confirm all 16 assets are present,
+   then click **Publish release** in GitHub. Create the signed tag before publishing: publishing an untagged draft can
+   create a tag itself.
+   Verify that Packagist indexes the tag for the already-registered PIE package.
 9. From a clean machine or temporary environment, run `pie install jbboehr/php-yumemi:X.Y.Z`, load the module, and use
    it with the named compatible yumemi.php release.
 
-If publication fails after pushing the tag, keep the tag and repair the failed publication step. Publish a new version
-only if the code must change. A PECL `package.xml` is out of scope unless the project later chooses to publish through
-PECL.
+If draft preparation or publication fails after pushing the tag, keep the tag and repair the failed step. Publish a new
+version only if the code must change. A PECL `package.xml` is out of scope unless the project later chooses to publish
+through PECL.
 
 ## Binary release packages
 
 After all builds pass, CI calls `.github/workflows/release.yml` from the same commit. Its three steps download the
-Windows and macOS ARM64 ZIPs from the current run, verify all 16 expected packages, and publish on tags only.
-Branch and pull-request packages use the commit SHA in place of the tag and stop after verification. Tag publication
-checks that the tag still points to the tested commit, creates a draft if necessary, and publishes after every upload
-succeeds.
+Windows and macOS ARM64 ZIPs from the current run, verify all 16 expected packages, and stage draft releases for pushes
+to `release/v*` branches and `v*` tags. For `release/vX.Y.Z`, both the package names and draft use `vX.Y.Z`, before that
+Git tag exists. Other branches and pull requests use the commit SHA and stop after package verification.
+
+Before uploading, CI checks that the source branch or tag still points to the tested commit and the release is a draft.
+Branch runs also check that the version tag does not yet exist. Branch and tag uploads for the same version are
+serialized, but pushing a tag or publishing through GitHub is outside that queue; follow the ordering above.
+CI verifies draft uploads by downloading and comparing every package, then records the tested commit as the draft target.
 
 This stage uses the tested artifacts without rebuilding or restoring a Nix cache. Keep its expected package list
 aligned with the native CI matrix.
@@ -149,7 +159,7 @@ gh run download RUN_ID --pattern 'php_yumemi-*.zip' --dir binary-packages
 Each Windows artifact contains the distributable ZIP at its root and a separate `logs/` ZIP. macOS artifacts contain
 only the distributable ZIP. Only the expected root ZIPs belong on the release. To repair an upload, rerun the failed
 release job within the CI run; it reuses that run's artifacts. If those artifacts have expired, rerun the tag's CI to
-rebuild them. Immutable releases cannot accept replacement assets.
+rebuild them. Published releases are not updated by this workflow.
 
 ### Windows
 
@@ -176,7 +186,8 @@ matching DLL and `LICENSE`, then run a clean Windows PIE install and module-load
 The macOS job packages its tested `yumemi.so` using PIE's
 [pre-packaged binary format](https://github.com/php/pie/blob/1.5.x/docs/extension-maintainers.md#pre-packaged-binary):
 `php_yumemi-{tag}_php{php-version}-arm64-darwin-bsdlibc-{nts|zts}.zip`. The archive contains `yumemi.so`, `LICENSE.md`,
-`LICENSE_EXCEPTION.md`, and `UDUNITS-COPYRIGHT` at its root. Branch builds substitute the commit SHA for the tag.
+`LICENSE_EXCEPTION.md`, and `UDUNITS-COPYRIGHT` at its root. Branch builds outside `release/v*` substitute the commit SHA
+for the tag.
 
 The packages target macOS 15 or later and non-debug PHP builds. CI rejects libraries outside `/usr/lib` and
 `/System/Library` so packages do not depend on Homebrew paths from the runner. It also verifies the module's ARM64

@@ -2,13 +2,17 @@ name: release
 
 on:
   workflow_call:
+    inputs:
+      package-ref:
+        required: true
+        type: string
 
 jobs:
   release:
     name: Release packages
     runs-on: ubuntu-latest
     concurrency:
-      group: release-${{ github.ref }}
+      group: release-${{ inputs.package-ref }}
       cancel-in-progress: false
     steps:
       - name: Download tested release packages
@@ -19,7 +23,7 @@ jobs:
           merge-multiple: true
       - name: Verify release packages
         env:
-          PACKAGE_REF: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+          PACKAGE_REF: ${{ inputs.package-ref }}
         run: |
           packages=()
           for version in 8.2 8.3 8.4 8.5; do
@@ -44,23 +48,44 @@ jobs:
           mv "${packages[@]}" release-packages/
           echo "Verified ${#packages[@]} release packages."
 
-      - name: Publish release packages
-        if: github.event_name == 'push' && github.ref_type == 'tag'
+      - name: Upload draft release packages
+        if: github.event_name == 'push' && (github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/release/'))
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.package-ref }}
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          tag_ref=$(jq -rn --arg tag "$RELEASE_TAG" '"refs/tags/" + $tag | @uri')
-          tag_sha=$(gh api "repos/$GH_REPO/commits/$tag_ref" --jq .sha)
-          if [ "$tag_sha" != "$RELEASE_SHA" ]; then
-            echo "Tag $RELEASE_TAG no longer points to the tested commit." >&2
+          source_ref=$(jq -rn --arg ref "$GITHUB_REF" '$ref | @uri')
+          source_sha=$(gh api "repos/$GH_REPO/commits/$source_ref" --jq .sha)
+          if [ "$source_sha" != "$RELEASE_SHA" ]; then
+            echo "$GITHUB_REF no longer points to the tested commit." >&2
             exit 1
           fi
 
+          # Do not start a branch upload after the version has been tagged.
+          if [ "$GITHUB_REF_TYPE" != tag ]; then
+            tag_path=$(jq -rn --arg tag "$RELEASE_TAG" '$tag | @uri')
+            tag_exists=$(gh api "repos/$GH_REPO/git/matching-refs/tags/$tag_path" |
+              jq --arg ref "refs/tags/$RELEASE_TAG" 'any(.[]; .ref == $ref)')
+            if [ "$tag_exists" = true ]; then
+              echo "$RELEASE_TAG already exists; use its tag CI run." >&2
+              exit 1
+            fi
+          fi
+
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --notes ""
+            gh release create "$RELEASE_TAG" --target "$RELEASE_SHA" --draft --title "$RELEASE_TAG" --notes ""
+          fi
+          if [ "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" != true ]; then
+            echo "Release $RELEASE_TAG is already published; refusing to replace its assets." >&2
+            exit 1
           fi
           gh release upload "$RELEASE_TAG" release-packages/*.zip --clobber
-          gh release edit "$RELEASE_TAG" --draft=false
+          gh release download "$RELEASE_TAG" --pattern 'php_yumemi-*.zip' --dir downloaded-packages
+          for package in release-packages/*.zip; do
+            cmp "$package" "downloaded-packages/${package##*/}"
+          done
+          gh release edit "$RELEASE_TAG" --target "$RELEASE_SHA"
+          echo "Draft $RELEASE_TAG is ready for inspection at commit $RELEASE_SHA."
