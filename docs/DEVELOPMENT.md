@@ -97,9 +97,14 @@ Every Nix check must pass before CI uploads packages to a draft release. Inspect
 nix eval --json .#githubActions.matrix
 ```
 
-The matrix and build jobs use [cache-nix-action](https://github.com/nix-community/cache-nix-action) to restore and save
-the Nix store. Build caches are keyed by system, check, lock file, and commit, with fallback to earlier caches for the
-same check. Checks run after every restore; a cache hit does not skip validation.
+The Nix jobs share one dependency cache per host OS and architecture, keyed by `flake.lock` and the Nix files.
+On a cache miss, the matrix job runs `nix develop --command true` for each check to prepare its build dependencies,
+including the Windows SDK, without building the extension or running checks. It saves the shared store through
+[cache-nix-action](https://github.com/nix-community/cache-nix-action). An exact cache hit skips this preparation.
+The parallel check jobs restore the shared cache and always run their checks. They do not save separate caches.
+
+GitHub scopes caches to a branch or tag, with access to the default branch's caches and, for pull requests, the base
+branch's caches. A new release branch can reuse a matching cache from `master`, but not from `develop`.
 
 The default flake source comes from Git, so it excludes untracked files. Stage new files before using the default check,
 or use a `path:` flake reference while developing them.
